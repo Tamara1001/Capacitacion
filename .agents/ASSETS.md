@@ -55,6 +55,9 @@ Formato en repo: `.wav` 44.1 kHz; import en Unity: SFX cortos *Decompress On Loa
 ## Registro de licencias
 | Asset | Autor / Fuente | Licencia | URL | Usado en |
 |-------|----------------|----------|-----|----------|
-| _(vacío)_ | | | | |
+| Barlow (Regular/SemiBold/Bold) | The Barlow Project Authors | SIL OFL 1.1 | https://github.com/jpt/barlow | UI (TMP SDF en `UI/Fonts`). Reemplaza a Inter |
+| Kenney Impact Sounds / Interface Sounds | Kenney | CC0 | https://kenney.nl | SFX y UI en `Audio/SFX`, `Audio/UI` |
+| AMB_MotorHum, AMB_RoomHVAC | Propio (`Tools/audio/synth_loops.py`) | Propio | — | Ambiente |
+| Modelos `SM_*` | Propio (`Blender/scripts/build_props.py`) | Propio | — | Props de la sala |
 
 Mantener este registro actualizado; se publica como *Créditos* en el menú.

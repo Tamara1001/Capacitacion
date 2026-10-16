@@ -35,6 +35,9 @@ namespace LotoSim.UI
         private Toggle _invertToggle;
 
         [SerializeField]
+        private Slider _volumeSlider;
+
+        [SerializeField]
         private Button _optionsCloseButton;
 
         [SerializeField]
@@ -62,6 +65,8 @@ namespace LotoSim.UI
             _sensitivitySlider.onValueChanged.AddListener(v => Settings.LookSensitivity = v);
             _invertToggle.SetIsOnWithoutNotify(Settings.InvertY);
             _invertToggle.onValueChanged.AddListener(v => Settings.InvertY = v);
+            _volumeSlider.SetValueWithoutNotify(Settings.MasterVolume);
+            _volumeSlider.onValueChanged.AddListener(v => Settings.MasterVolume = v);
 
             _optionsPanel.SetActive(false);
             _creditsPanel.SetActive(false);

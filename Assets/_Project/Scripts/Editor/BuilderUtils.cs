@@ -70,6 +70,77 @@ namespace LotoSim.Editor
             return material;
         }
 
+        // ---------- Modelos (FBX de Blender) ----------
+
+        private const string ModelsFolder = "Assets/_Project/Art/Models/";
+
+        /// <summary>
+        /// Instancia SM_{asset} dentro de un contenedor. El FBX llega girado 180° en Y respecto del diseño
+        /// en Blender; el contenedor lo corrige para que las coordenadas del diseño valgan directo
+        /// (X derecha, Y arriba, frente hacia -Z).
+        /// </summary>
+        public static GameObject Model(string asset, Transform parent, Vector3 localPos, Vector3 euler = default,
+            string name = null, float scale = 1f)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{ModelsFolder}SM_{asset}.fbx") ??
+                         throw new ArgumentException($"No existe el modelo SM_{asset}.fbx (correr Blender/scripts/build_props.py)");
+            var wrapper = Empty(name ?? asset, parent, localPos, euler);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, wrapper.transform);
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            instance.transform.localScale = Vector3.one * scale;
+            return wrapper;
+        }
+
+        /// <summary>Agrega un BoxCollider en root que envuelve todos sus renderers.</summary>
+        public static BoxCollider FitCollider(GameObject root, float padding = 0.01f)
+        {
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
+            var bounds = new Bounds();
+            bool first = true;
+            foreach (var r in renderers)
+            {
+                if (r is not MeshRenderer || r.GetComponent<TMP_Text>() != null)
+                    continue;
+                var b = r.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    var corner = new Vector3(
+                        (i & 1) == 0 ? b.min.x : b.max.x,
+                        (i & 2) == 0 ? b.min.y : b.max.y,
+                        (i & 4) == 0 ? b.min.z : b.max.z);
+                    var local = root.transform.InverseTransformPoint(corner);
+                    if (first)
+                    {
+                        bounds = new Bounds(local, Vector3.zero);
+                        first = false;
+                    }
+                    else
+                    {
+                        bounds.Encapsulate(local);
+                    }
+                }
+            }
+            var collider = root.AddComponent<BoxCollider>();
+            collider.center = bounds.center;
+            collider.size = bounds.size + Vector3.one * padding;
+            return collider;
+        }
+
+        /// <summary>Reemplaza todos los materiales de los renderers (ej. botón verde/rojo, guantes de tela).</summary>
+        public static void Recolor(GameObject root, Material material)
+        {
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.GetComponent<TMP_Text>() != null)
+                    continue;
+                var mats = r.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++)
+                    mats[i] = material;
+                r.sharedMaterials = mats;
+            }
+        }
+
         // ---------- Geometría ----------
 
         public static GameObject Empty(string name, Transform parent, Vector3 localPos, Vector3 euler = default)

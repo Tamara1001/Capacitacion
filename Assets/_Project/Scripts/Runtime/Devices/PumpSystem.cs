@@ -28,6 +28,9 @@ namespace LotoSim.Devices
         [SerializeField, Tooltip("Acople que gira mientras la bomba está en marcha")]
         private Transform _coupling;
 
+        [SerializeField, Tooltip("Eje de giro del acople en espacio mundo")]
+        private Vector3 _couplingAxis = Vector3.right;
+
         [SerializeField]
         private float _couplingDegreesPerSecond = 720f;
 
@@ -63,7 +66,7 @@ namespace LotoSim.Devices
             Simulate(Time.deltaTime);
 
             if (_coupling != null && _model.IsRunning)
-                _coupling.Rotate(Vector3.up, _couplingDegreesPerSecond * Time.deltaTime, Space.Self);
+                _coupling.Rotate(_couplingAxis, _couplingDegreesPerSecond * Time.deltaTime, Space.World);
 
             if (_model.IsEnergized != _lastEnergized || _model.IsRunning != _lastRunning ||
                 _model.IsDepressurized != _lastDepressurized || _model.IsLeaking != _lastLeaking)

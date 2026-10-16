@@ -70,7 +70,7 @@ Objetivo: lógica de capacitación **desacoplada** del input y de la presentaci�
 - `GuidanceController` (sólo modo guiado): resalta los `HighlightIds` de las tareas pendientes (en pasos ordenados, sólo la siguiente) con pulso + marcador flotante; muestra fantasmas (`LotoSocket.ShowGhost`) donde se puede colocar el ítem en mano; convierte `MistakeMade` en avisos con explicación. En modo evaluación no muestra nada de esto.
 
 ### Player
-- `FirstPersonMotor` (CharacterController, WASD, Shift para caminar rápido, sin salto).
+- `FirstPersonMotor` (CharacterController, WASD o flechas, Shift para caminar rápido, sin salto). Lee `Player/Move`; si llega en cero consulta `Keyboard.current` directamente (`UsedKeyboardFallback`).
 - `StationTeleport`: 5 estaciones (Locker, Estación LOTO, Tablero, Bomba, Operador); `T` abre el mapa y 1–5 saltan con fundido (`ScreenFade`). Mientras el mapa está abierto `OverlayMenu.IsOpen` bloquea el interactor.
 - `DesktopLook` + `CursorControl`: mouse look con pointer lock (WebGL requiere click para capturar el cursor). Si el navegador no permite el lock (iframes restringidos, vistas embebidas), pasa a un modo de respaldo: la cámara sigue al mouse sin capturarlo y se puede mover e interactuar igual.
 
@@ -80,6 +80,7 @@ Objetivo: lógica de capacitación **desacoplada** del input y de la presentaci�
 - Regla: un componente que escucha eventos **no** puede vivir en el panel que él mismo desactiva (vive en el canvas).
 - `TabletView` (world-space, `Tab`): **M3**.
 - Las vistas **sólo leen** estado y escuchan eventos; las acciones pasan por métodos de servicios.
+- `InputDebugOverlay` (F3): estado del cursor, de las acciones y del teclado (teclas presionadas, entrada aplicada por el motor, posición). Primera herramienta ante "no me responde el teclado".
 
 ### Audio
 - `AudioService` con `AudioCue` (SO: clips, volumen, pitch random, 2D/3D). Bus: Master/SFX/Ambiente/UI en un AudioMixer.

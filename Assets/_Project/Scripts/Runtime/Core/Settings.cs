@@ -20,6 +20,19 @@ namespace LotoSim.Core
             }
         }
 
+        private const string VolumeKey = "loto.audio.master";
+
+        public static float MasterVolume
+        {
+            get => PlayerPrefs.GetFloat(VolumeKey, 0.8f);
+            set
+            {
+                PlayerPrefs.SetFloat(VolumeKey, Mathf.Clamp01(value));
+                PlayerPrefs.Save();
+                AudioListener.volume = Mathf.Clamp01(value);
+            }
+        }
+
         public static bool InvertY
         {
             get => PlayerPrefs.GetInt(InvertYKey, 0) == 1;

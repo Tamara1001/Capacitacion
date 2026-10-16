@@ -135,9 +135,17 @@ namespace LotoSim.Devices
             ghost.name = $"Ghost_{type}";
             ghost.transform.SetLocalPositionAndRotation(visual.transform.localPosition, visual.transform.localRotation);
             ghost.transform.localScale = visual.transform.localScale * 1.08f;
-            foreach (var r in ghost.GetComponentsInChildren<Renderer>())
-                r.sharedMaterial = _ghostMaterial;
-            foreach (var c in ghost.GetComponentsInChildren<Collider>())
+            // Los textos de la etiqueta no forman parte del fantasma.
+            foreach (var text in ghost.GetComponentsInChildren<TMPro.TMP_Text>(true))
+                DestroyImmediate(text.gameObject);
+            foreach (var r in ghost.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = r.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++)
+                    mats[i] = _ghostMaterial;
+                r.sharedMaterials = mats;
+            }
+            foreach (var c in ghost.GetComponentsInChildren<Collider>(true))
                 Destroy(c);
             ghost.SetActive(true);
             _ghosts[type] = ghost;

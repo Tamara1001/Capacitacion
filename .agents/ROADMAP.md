@@ -44,14 +44,15 @@ Marcar `[x]` al completar. Cada hito termina con una build WebGL probada.
 - [ ] Subir a itch.io (privada) — requiere cuenta/butler de la dueña del proyecto
 
 ## M3 — Arte y audio v1 (días 7–9)
-- [ ] Atlas de paleta + material `M_Palette`; shaders de outline/ghost
-- [ ] Modelos Blender prioridad A (bomba, válvulas, manómetro, seccionador, botonera, candado, etiqueta, bloqueo, llave)
-- [ ] Modelos prioridad B (estación LOTO, locker + EPP, tablero, kit de cañerías)
-- [ ] Sala modular, ambientación y señalética; NPC CC0
-- [ ] Iluminación horneada + post-procesado leve
-- [ ] Tablet diegética (pestañas Pasos / Tarjeta LOTO / OT)
-- [ ] UI estilizada (Inter, paneles, íconos) según DESIGN.md; evitar que el toast se superponga al panel de pasos en 16:10
-- [ ] SFX + ambiente + mixer; registrar licencias en ASSETS.md
+- [x] **Bug WASD**: no se pudo reproducir (funciona en el Editor y en Chrome con teclado real). Se endureció igual: el movimiento cae al teclado directo (WASD/flechas) si la acción `Move` llega en cero, el Editor enruta el teclado al juego aunque la Game view no tenga foco (`LotoSim.inputsettings`) y F3 muestra un overlay de diagnóstico. Si el usuario lo sigue viendo, pedir una captura del F3.
+- [ ] Atlas de paleta + material `M_Palette` (hoy: materiales planos `M_GB_*`); [x] shader de outline (`LotoSim/Outline`, hover blanco + objetivo ámbar); ghost sigue como material transparente
+- [x] Modelos Blender prioridad A (bomba, válvulas, manómetro, seccionador, botonera, candado, etiqueta, bloqueo) — falta `SM_Key`
+- [ ] Modelos prioridad B: [x] estación LOTO, locker + EPP, tablero; falta kit de cañerías (`SM_Pipe_*`) y `SM_ElectricalPanel` como modelo propio
+- [x] Sala, ambientación y señalética; [x] operador (`SM_Operator`, propio en lugar de NPC CC0)
+- [ ] Iluminación horneada (hoy realtime) + [x] post-procesado leve (`PP_PumpRoom`)
+- [x] Tablet diegética (pestañas Pasos / Tarjeta LOTO / OT)
+- [ ] UI estilizada: [x] fuente Barlow (reemplaza Inter), paneles; faltan íconos; evitar que el toast se superponga al panel de pasos en 16:10
+- [x] SFX + ambiente + `SND_Library` + volumen maestro; [x] licencias registradas en ASSETS.md; [ ] mixer
 
 ## M4 — Pulido, rendimiento y entrega (días 10–12)
 - [ ] Perf en notebook con GPU integrada: ≥30 FPS, build < 50 MB, carga < 20 s

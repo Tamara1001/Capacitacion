@@ -48,7 +48,8 @@ Interior ~12 × 9 m, techo 4 m. Contenido:
 | Interactuar / colocar | Click izq. | Gatillo / grip |
 | Seleccionar ítem del kit | 1–4 o rueda | Tomar del cinturón |
 | Guardar ítem en mano | Click der. / R | Soltar en el cinturón |
-| Tablet | Tab | Mirar muñeca |
+| Tablet | Tab (1–3 cambia de pestaña) | Mirar muñeca |
+| Diagnóstico de entrada | F3 | — |
 | Mapa de estaciones | T | Teleport |
 | Caminar rápido | Shift | — |
 | Pausa | Esc / P (WebGL libera el cursor con Esc) | Menú |

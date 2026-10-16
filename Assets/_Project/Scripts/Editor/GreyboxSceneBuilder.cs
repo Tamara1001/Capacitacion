@@ -1,3 +1,4 @@
+using LotoSim.Audio;
 using LotoSim.Core;
 using LotoSim.Devices;
 using LotoSim.Evaluation;
@@ -45,6 +46,19 @@ namespace LotoSim.Editor
         private static Material Pilot => Mat("Pilot", "#3BB273", 0.6f, emissive: true);
         private static Material Ghost => TransparentMat("Ghost", "#FFC629", 0.45f);
 
+        /// <summary>Crea/actualiza todos los materiales que usan los modelos de Blender (deben existir antes de importarlos).</summary>
+        [MenuItem("LotoSim/Greybox/Crear materiales", priority = 38)]
+        public static void EnsureMaterials()
+        {
+            _ = Floor; _ = Wall; _ = Graphite; _ = PumpBlue; _ = PipeGreen; _ = Orange; _ = Red; _ = Yellow;
+            _ = Green; _ = White; _ = Steel; _ = Dark; _ = Blue; _ = Worker; _ = Pilot; _ = Ghost;
+            Mat("Skin", "#C9A27E", 0.3f);
+            Mat("Glass", "#9FC3D9", 0.85f);
+            Mat("Light", "#FFF6E0", 0.1f, emissive: true).SetColor("_EmissionColor", new Color(1f, 0.96f, 0.88f) * 2.2f);
+            Mat("Guide", "#FFC629", 0.2f, emissive: true);
+            AssetDatabase.SaveAssets();
+        }
+
         [MenuItem("LotoSim/Greybox/Construir PumpRoom", priority = 40)]
         public static void Build()
         {
@@ -78,8 +92,11 @@ namespace LotoSim.Editor
             Set(runner, ("_procedure", procedure), ("_pump", pump));
             BuildEvaluationAndGuidance(systems, runner, pump, player.Kit);
             AddHighlightTargets(scene);
+            BuildAudio(systems, pump, player);
 
             BuildUi(ui, player);
+            AddUiSounds(ui.Find("HUD").gameObject);
+            BuildTablet(player.Interactor.transform);
 
             MarkStatic(environment);
 
@@ -131,6 +148,80 @@ namespace LotoSim.Editor
             }
         }
 
+        // ---------------------------------------------------------------- Tablet
+
+        /// <summary>Tablet en world-space sostenida frente a la cámara (abajo y levemente inclinada).</summary>
+        private static void BuildTablet(Transform camera)
+        {
+            var holder = Empty("Tablet", camera, new Vector3(0f, -0.065f, 0.33f), new Vector3(10f, 0f, 0f));
+            var view = holder.AddComponent<TabletView>();
+
+            var device = Empty("Device", holder.transform, Vector3.zero);
+            Box("Body", device.transform, new Vector3(0f, 0f, 0.006f), new Vector3(0.31f, 0.22f, 0.012f), Dark, false);
+            Box("Bumper", device.transform, new Vector3(0f, 0f, 0.008f), new Vector3(0.325f, 0.235f, 0.008f), Orange, false);
+
+            var canvasGo = new GameObject("Screen", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+            var rect = (RectTransform)canvasGo.transform;
+            rect.SetParent(device.transform, false);
+            rect.localPosition = new Vector3(0f, 0f, -0.001f);
+            rect.sizeDelta = new Vector2(900f, 640f);
+            rect.localScale = Vector3.one * (0.29f / 900f);
+            var canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvasGo.GetComponent<CanvasScaler>().dynamicPixelsPerUnit = 4f;
+
+            var background = Panel("Background", rect, Center, Center, Vector2.zero, Vector2.zero, "#16191E", 1f);
+            StretchFull(background.rectTransform);
+            var header = Panel("Header", rect, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900f, 70f), "#1C1F24", 1f);
+            header.rectTransform.anchorMin = new Vector2(0f, 1f);
+            header.rectTransform.anchorMax = new Vector2(1f, 1f);
+            header.rectTransform.sizeDelta = new Vector2(0f, 70f);
+            var tabs = Text("Tabs", header.transform, 31, TextAlignmentOptions.Left);
+            tabs.margin = new Vector4(24f, 0f, 70f, 0f);
+            var status = Panel("Status", header.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(26f, 26f), "#3BB273", 1f);
+            var content = Text("Content", rect, 33, TextAlignmentOptions.TopLeft);
+            content.margin = new Vector4(30f, 90f, 30f, 24f);
+            content.richText = true;
+
+            Set(view, ("_root", device), ("_tabs", tabs), ("_content", content), ("_statusLight", status));
+        }
+
+        // ---------------------------------------------------------------- Audio
+
+        private static void BuildAudio(Transform systems, PumpSystem pump, PlayerRefs player)
+        {
+            var library = AudioDataBuilder.Build();
+            var service = new GameObject("AudioService").AddComponent<AudioService>();
+            service.transform.SetParent(systems, false);
+            Set(service, ("_library", library), ("_ambience", AudioDataBuilder.Clip("Ambience/AMB_RoomHVAC")));
+
+            var bleed = GameObject.Find("V-103").GetComponent<Valve>();
+            var audio = pump.gameObject.AddComponent<PumpAudio>();
+            var motor = AudioSourceAt("MotorAudio", pump.transform, new Vector3(1.8f, 0.6f, 1f), AudioDataBuilder.Clip("Ambience/AMB_MotorHum"));
+            var drain = AudioSourceAt("DrainAudio", pump.transform, bleed.transform.position, AudioDataBuilder.Clip("SFX/SFX_WaterBleed"));
+            var spray = AudioSourceAt("SprayAudio", pump.transform, bleed.transform.position, AudioDataBuilder.Clip("SFX/SFX_WaterSpray"));
+            Set(audio, ("_pump", pump), ("_bleed", bleed), ("_motor", motor), ("_drain", drain), ("_spray", spray));
+
+            player.Kit.gameObject.AddComponent<Footsteps>();
+        }
+
+        private static AudioSource AudioSourceAt(string name, Transform parent, Vector3 worldPos, AudioClip clip)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = worldPos;
+            var source = go.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.playOnAwake = false;
+            return source;
+        }
+
+        public static void AddUiSounds(GameObject canvas)
+        {
+            var sounds = canvas.AddComponent<UiSounds>();
+            Set(sounds, ("_click", AudioDataBuilder.Clip("UI/UI_Click")));
+        }
+
         // ---------------------------------------------------------------- Ambiente
 
         private static void BuildLighting(Transform parent)
@@ -138,14 +229,62 @@ namespace LotoSim.Editor
             var sun = Empty("Directional Light", parent, new Vector3(0f, 6f, 0f), new Vector3(55f, -35f, 0f));
             var light = sun.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.intensity = 1.1f;
+            light.intensity = 0.75f;
             light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.7f;
             light.color = new Color(1f, 0.97f, 0.92f);
 
+            // Luz de relleno bajo cada luminaria del techo (sin sombras: barato en WebGL).
+            foreach (var pos in new[] { new Vector3(-3f, 3.7f, -2f), new Vector3(2f, 3.7f, -2f), new Vector3(-3f, 3.7f, 2f), new Vector3(2f, 3.7f, 2f) })
+            {
+                var point = Empty("FixtureLight", parent, pos).AddComponent<Light>();
+                point.type = LightType.Point;
+                point.range = 7.5f;
+                point.intensity = 1.6f;
+                point.color = new Color(1f, 0.95f, 0.86f);
+                point.shadows = LightShadows.None;
+            }
+
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.62f, 0.65f, 0.7f);
-            RenderSettings.ambientEquatorColor = new Color(0.5f, 0.52f, 0.55f);
-            RenderSettings.ambientGroundColor = new Color(0.32f, 0.33f, 0.35f);
+            RenderSettings.ambientSkyColor = new Color(0.66f, 0.69f, 0.74f);
+            RenderSettings.ambientEquatorColor = new Color(0.52f, 0.54f, 0.57f);
+            RenderSettings.ambientGroundColor = new Color(0.34f, 0.35f, 0.37f);
+
+            var volume = Empty("PostProcess", parent, Vector3.zero).AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.sharedProfile = PostProfile();
+        }
+
+        private const string PostProfilePath = "Assets/_Project/Settings/PP_PumpRoom.asset";
+
+        private static VolumeProfile PostProfile()
+        {
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(PostProfilePath);
+            if (profile != null)
+                return profile;
+            if (!AssetDatabase.IsValidFolder("Assets/_Project/Settings"))
+                AssetDatabase.CreateFolder("Assets/_Project", "Settings");
+            profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            AssetDatabase.CreateAsset(profile, PostProfilePath);
+
+            var tonemapping = profile.Add<UnityEngine.Rendering.Universal.Tonemapping>(true);
+            tonemapping.mode.Override(UnityEngine.Rendering.Universal.TonemappingMode.Neutral);
+            var bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
+            bloom.intensity.Override(0.35f);
+            bloom.threshold.Override(1.05f);
+            var color = profile.Add<UnityEngine.Rendering.Universal.ColorAdjustments>(true);
+            color.postExposure.Override(0.15f);
+            color.contrast.Override(10f);
+            color.saturation.Override(6f);
+            var vignette = profile.Add<UnityEngine.Rendering.Universal.Vignette>(true);
+            vignette.intensity.Override(0.2f);
+            vignette.smoothness.Override(0.45f);
+
+            foreach (var component in profile.components)
+                AssetDatabase.AddObjectToAsset(component, profile);
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
+            return profile;
         }
 
         private static void BuildRoom(Transform parent)
@@ -160,6 +299,10 @@ namespace LotoSim.Editor
             Box("Wall_S_Lintel", room, new Vector3(-4f, 3.25f, -4.6f), new Vector3(2f, 1.5f, 0.2f), Wall);
             var ceiling = Box("Ceiling", room, new Vector3(0f, 4.05f, 0f), new Vector3(12.4f, 0.1f, 9.4f), Wall, false);
             ceiling.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            // Zócalo oscuro para dar lectura a la base de las paredes.
+            Box("Skirting_N", room, new Vector3(0f, 0.06f, 4.49f), new Vector3(12.2f, 0.12f, 0.02f), Graphite, false);
+            Box("Skirting_W", room, new Vector3(-5.99f, 0.06f, 0f), new Vector3(0.02f, 0.12f, 9.2f), Graphite, false);
+            Box("Skirting_E", room, new Vector3(5.99f, 0.06f, 0f), new Vector3(0.02f, 0.12f, 9.2f), Graphite, false);
 
             // Zona demarcada alrededor de la bomba.
             var zone = Empty("SafetyZone", room, new Vector3(0.3f, 0.002f, 1f)).transform;
@@ -168,14 +311,34 @@ namespace LotoSim.Editor
             Box("Line_W", zone, new Vector3(-2.7f, 0f, 0f), new Vector3(0.08f, 0.004f, 1.98f), Yellow, false);
             Box("Line_E", zone, new Vector3(2.7f, 0f, 0f), new Vector3(0.08f, 0.004f, 1.98f), Yellow, false);
 
-            // Equipo fuera de servicio de fondo.
-            var spare = Empty("P-102_Decor", parent, new Vector3(3.6f, 0f, 3.4f)).transform;
-            Box("Base", spare, new Vector3(0f, 0.1f, 0f), new Vector3(2f, 0.2f, 0.8f), Graphite);
-            Cylinder("Motor", spare, new Vector3(0.45f, 0.55f, 0f), new Vector3(0f, 0f, 90f), new Vector3(0.45f, 0.4f, 0.45f), Steel);
-            Cylinder("Casing", spare, new Vector3(-0.4f, 0.55f, 0f), new Vector3(0f, 0f, 90f), new Vector3(0.55f, 0.15f, 0.55f), Steel);
-            Label("P-102 · fuera de servicio", spare, new Vector3(0f, 1.15f, -0.2f), Vector3.zero, 0.35f, "#2E3238");
+            // Luminarias, bandeja portacables y extintor.
+            var fixtures = Empty("Fixtures", parent, Vector3.zero).transform;
+            foreach (var pos in new[] { new Vector3(-3f, 3.96f, -2f), new Vector3(2f, 3.96f, -2f), new Vector3(-3f, 3.96f, 2f), new Vector3(2f, 3.96f, 2f) })
+                Model("CeilingLight", fixtures, pos);
+            Model("CableTray", fixtures, new Vector3(-1.5f, 3.4f, 4.2f));
+            Model("CableTray", fixtures, new Vector3(1.5f, 3.4f, 4.2f));
+            Model("Extinguisher", fixtures, new Vector3(-2.75f, 0f, -4.42f), new Vector3(0f, 180f, 0f));
+            Sign(fixtures, "ExtinguisherSign", new Vector3(-2.75f, 1.05f, -4.48f), new Vector3(0f, 180f, 0f), "#D3272E", "EXTINTOR", "#FFFFFF");
 
-            Label("SALA DE BOMBAS · SECTOR AGUA DE PROCESO", parent, new Vector3(1.5f, 3.3f, 4.48f), Vector3.zero, 2.2f, "#2E3238", 8f);
+            // Equipo fuera de servicio de fondo (mismos modelos, en gris).
+            var spare = Empty("P-102_Decor", parent, new Vector3(3.6f, 0f, 3.4f)).transform;
+            Recolor(Model("PumpSkid", spare, Vector3.zero), Steel);
+            Recolor(Model("PumpCasing", spare, new Vector3(-0.4f, 0.6f, 0f)), Steel);
+            Label("P-102 · fuera de servicio", spare, new Vector3(0f, 1.25f, -0.2f), Vector3.zero, 0.5f, "#2E3238", 2f);
+
+            Label("SALA DE BOMBAS · SECTOR AGUA DE PROCESO", parent, new Vector3(1.5f, 3.0f, 4.48f), Vector3.zero, 2.2f, "#2E3238", 8f);
+            Sign(parent, "PpeSign", new Vector3(-5.98f, 2.05f, -2.6f), new Vector3(0f, -90f, 0f), "#2D7FF9", "USO OBLIGATORIO\nDE EPP", "#FFFFFF");
+            Sign(parent, "ElectricSign", new Vector3(-4.2f, 1.9f, 4.48f), Vector3.zero, "#FFC629", "RIESGO\nELÉCTRICO", "#1C1F24");
+            Sign(parent, "LotoSign", new Vector3(-5.98f, 2.25f, 1.4f), new Vector3(0f, -90f, 0f), "#D3272E", "BLOQUEAR Y ETIQUETAR\nANTES DE INTERVENIR", "#FFFFFF", 1.1f);
+        }
+
+        /// <summary>Cartel de seguridad simple (placa de color + texto).</summary>
+        private static void Sign(Transform parent, string name, Vector3 pos, Vector3 euler, string hex, string text, string textHex,
+            float width = 0.6f)
+        {
+            var sign = Empty(name, parent, pos, euler);
+            Box("Board", sign.transform, Vector3.zero, new Vector3(width, 0.36f, 0.015f), BuilderUtils.Mat($"Sign_{hex.TrimStart('#')}", hex), false);
+            Label(text, sign.transform, new Vector3(0f, 0f, -0.01f), Vector3.zero, 0.55f, textHex, width);
         }
 
         // ---------------------------------------------------------------- EPP
@@ -183,24 +346,25 @@ namespace LotoSim.Editor
         private static void BuildPpe(Transform parent)
         {
             var ppe = Empty("PPE", parent, Vector3.zero).transform;
-            Box("Locker", ppe, new Vector3(-5.7f, 1f, -3.3f), new Vector3(0.7f, 2f, 0.9f), Worker);
-            Box("Table", ppe, new Vector3(-5.55f, 0.45f, -1.9f), new Vector3(0.75f, 0.9f, 1.7f), Graphite);
-            Label("LOCKER EPP", ppe, new Vector3(-5.98f, 1.7f, -1.9f), new Vector3(0f, -90f, 0f), 0.45f, "#2E3238");
+            FitCollider(Model("Locker", ppe, new Vector3(-5.7f, 0f, -3.3f), new Vector3(0f, -90f, 0f)));
+            FitCollider(Model("Workbench", ppe, new Vector3(-5.55f, 0f, -1.9f)));
+            Label("LOCKER EPP", ppe, new Vector3(-5.98f, 1.55f, -1.9f), new Vector3(0f, -90f, 0f), 0.6f, "#2E3238");
 
             float z = -2.55f;
+            var item = new Vector3(0f, -90f, 0f);
             PpeItem(ppe, "PPE-HELMET", "Casco de seguridad", "ppe.helmet", null, "Casco colocado.", ref z,
-                t => Sphere("Mesh", t, Vector3.zero, new Vector3(0.24f, 0.15f, 0.24f), Yellow));
+                t => Model("Helmet", t, Vector3.zero, item));
             // Los distractores no muestran aviso propio: el error lo explica la evaluación (sólo en modo guiado).
             PpeItem(ppe, "PPE-CAP", "Gorra", null, "ppe.wrong.cap", null, ref z,
-                t => Sphere("Mesh", t, Vector3.zero, new Vector3(0.2f, 0.09f, 0.2f), Blue));
+                t => Model("Cap", t, Vector3.zero, item));
             PpeItem(ppe, "PPE-GLASSES", "Anteojos de seguridad", "ppe.glasses", null, "Anteojos colocados.", ref z,
-                t => Box("Mesh", t, Vector3.zero, new Vector3(0.06f, 0.04f, 0.17f), Dark));
+                t => Model("SafetyGlasses", t, Vector3.zero, item));
             PpeItem(ppe, "PPE-CLOTH-GLOVES", "Guantes de tela", null, "ppe.wrong.cloth-gloves", null, ref z,
-                t => Box("Mesh", t, Vector3.zero, new Vector3(0.12f, 0.05f, 0.17f), White));
+                t => { var g = Model("Gloves", t, Vector3.zero, item); Recolor(g, White); return g; });
             PpeItem(ppe, "PPE-GLOVES", "Guantes dieléctricos", "ppe.gloves", null, "Guantes dieléctricos colocados.", ref z,
-                t => Box("Mesh", t, Vector3.zero, new Vector3(0.12f, 0.05f, 0.17f), Orange));
+                t => Model("Gloves", t, Vector3.zero, item));
             PpeItem(ppe, "PPE-HEADPHONES", "Auriculares de música", null, "ppe.wrong.headphones", null, ref z,
-                t => Box("Mesh", t, Vector3.zero, new Vector3(0.08f, 0.14f, 0.18f), Red));
+                t => Model("Headphones", t, new Vector3(0f, 0.04f, 0f), item));
         }
 
         private delegate GameObject MeshFactory(Transform parent);
@@ -208,8 +372,9 @@ namespace LotoSim.Editor
         private static void PpeItem(Transform parent, string id, string name, string flag, string wrongSignal,
             string toast, ref float z, MeshFactory mesh)
         {
-            var root = Empty(id, parent, new Vector3(-5.55f, 0.96f, z));
+            var root = Empty(id, parent, new Vector3(-5.55f, 0.905f, z));
             mesh(root.transform);
+            FitCollider(root, 0.04f);
             var interactable = root.AddComponent<SignalInteractable>();
             bool correct = flag != null;
             Set(interactable,
@@ -226,23 +391,25 @@ namespace LotoSim.Editor
 
         private static void BuildLotoStation(Transform parent)
         {
-            var station = Empty("LOTO-STATION", parent, new Vector3(-5.96f, 1.4f, 1.4f));
+            var station = Model("LotoStationBoard", parent, new Vector3(-5.97f, 1.4f, 1.4f), new Vector3(0f, -90f, 0f), "LOTO-STATION");
             station.AddComponent<LotoStation>();
             var t = station.transform;
-            Box("Board", t, Vector3.zero, new Vector3(0.06f, 1.1f, 1.3f), Orange);
             for (int i = 0; i < 3; i++)
             {
-                float z = -0.35f + i * 0.35f;
-                Box($"Padlock_{i}", t, new Vector3(0.05f, 0.28f, z), new Vector3(0.04f, 0.08f, 0.06f), Red, false);
-                Box($"Tag_{i}", t, new Vector3(0.04f, 0.02f, z), new Vector3(0.01f, 0.16f, 0.09f), White, false);
+                float x = -0.48f + i * 0.24f;
+                Model("Padlock", t, new Vector3(x, 0.15f, -0.05f), Vector3.zero, $"Padlock_{i}");
+                Model("LotoTag", t, new Vector3(x, -0.06f, -0.05f), Vector3.zero, $"Tag_{i}");
             }
-            Box("Lockout_0", t, new Vector3(0.06f, -0.3f, -0.18f), new Vector3(0.07f, 0.12f, 0.14f), Red, false);
-            Box("Lockout_1", t, new Vector3(0.06f, -0.3f, 0.18f), new Vector3(0.07f, 0.12f, 0.14f), Red, false);
-            Label("ESTACIÓN DE BLOQUEO", t, new Vector3(0.05f, 0.7f, 0f), new Vector3(0f, -90f, 0f), 0.4f, "#2E3238", 3f);
+            Model("ValveLockout", t, new Vector3(0.25f, -0.35f, -0.07f), Vector3.zero, "Lockout_0");
+            Model("ValveLockout", t, new Vector3(0.45f, -0.35f, -0.07f), Vector3.zero, "Lockout_1");
+            Label("ESTACIÓN DE BLOQUEO", t, new Vector3(0f, 0.465f, -0.022f), Vector3.zero, 1.3f, "#1C1F24", 1.2f);
+            Label("LOTO · Candado + etiqueta por persona", t, new Vector3(0f, 0.395f, -0.022f), Vector3.zero, 0.6f, "#D3272E", 1.2f);
+            FitCollider(station);
 
-            var order = Empty("WORK-ORDER", parent, new Vector3(-5.97f, 1.4f, 0.35f));
-            Box("Clipboard", order.transform, Vector3.zero, new Vector3(0.03f, 0.34f, 0.25f), White);
-            Label("OT-0427", order.transform, new Vector3(0.02f, 0.08f, 0f), new Vector3(0f, -90f, 0f), 0.22f, PlateText, 0.3f);
+            var order = Empty("WORK-ORDER", parent, new Vector3(-5.97f, 1.4f, 0.4f));
+            Box("Clipboard", order.transform, Vector3.zero, new Vector3(0.02f, 0.34f, 0.25f), Graphite);
+            Box("Sheet", order.transform, new Vector3(0.012f, -0.01f, 0f), new Vector3(0.004f, 0.3f, 0.22f), White, false);
+            Label("ORDEN DE TRABAJO\nOT-0427", order.transform, new Vector3(0.016f, 0.08f, 0f), new Vector3(0f, -90f, 0f), 0.22f, PlateText, 0.22f);
             var source = order.AddComponent<DialogueSource>();
             Set(source,
                 ("_prompt", "Leer la orden de trabajo OT-0427"),
@@ -254,7 +421,7 @@ namespace LotoSim.Editor
         private static DisconnectSwitch BuildElectricalPanel(Transform parent)
         {
             var panel = Empty("ELECTRICAL-PANEL", parent, new Vector3(-3f, 0f, 4.42f)).transform;
-            Box("Cabinet", panel, new Vector3(0f, 1.3f, 0.05f), new Vector3(1.8f, 1.5f, 0.22f), Graphite);
+            FitCollider(Model("ElectricalCabinet", panel, new Vector3(0f, 1.3f, 0.05f)));
             Label("TABLERO TG-1", panel, new Vector3(0f, 2.25f, -0.07f), Vector3.zero, 1.0f, "#2E3238");
 
             DecorSwitch(panel, -0.55f, "DS-100", "Compresor C-201");
@@ -267,14 +434,15 @@ namespace LotoSim.Editor
 
         private static DisconnectSwitch SwitchDevice(Transform panel, float x)
         {
-            var root = Empty("DS-101", panel, new Vector3(x, 1.22f, -0.12f));
+            var root = Model("DisconnectSwitch", panel, new Vector3(x, 1.22f, -0.12f), Vector3.zero, "DS-101");
             var t = root.transform;
-            Box("Body", t, Vector3.zero, new Vector3(0.3f, 0.42f, 0.12f), Steel);
             var pivot = Empty("LeverPivot", t, new Vector3(0f, 0f, -0.07f));
-            Box("Lever", pivot.transform, new Vector3(0f, 0.11f, 0f), new Vector3(0.05f, 0.22f, 0.05f), Red, false);
+            Model("SwitchLever", pivot.transform, Vector3.zero);
 
-            var padlock = Box("LOTO_Padlock", t, new Vector3(0.1f, -0.13f, -0.09f), new Vector3(0.05f, 0.07f, 0.04f), Red, false);
-            var tag = Box("LOTO_Tag", t, new Vector3(0.1f, -0.24f, -0.09f), new Vector3(0.07f, 0.11f, 0.006f), White, false);
+            var padlock = Model("Padlock", t, new Vector3(0.107f, -0.16f, -0.085f), Vector3.zero, "LOTO_Padlock");
+            var tag = Model("LotoTag", t, new Vector3(0.107f, -0.2f, -0.095f), Vector3.zero, "LOTO_Tag");
+            AddTagText(tag);
+            FitCollider(root);
 
             var device = root.AddComponent<DisconnectSwitch>();
             Set(device,
@@ -291,9 +459,8 @@ namespace LotoSim.Editor
 
         private static void DecorSwitch(Transform panel, float x, string id, string load)
         {
-            var root = Empty($"{id}_Decor", panel, new Vector3(x, 1.22f, -0.12f)).transform;
-            Box("Body", root, Vector3.zero, new Vector3(0.3f, 0.42f, 0.12f), Steel);
-            Box("Lever", root, new Vector3(0f, 0.11f, -0.07f), new Vector3(0.05f, 0.22f, 0.05f), Red, false);
+            var root = Model("DisconnectSwitch", panel, new Vector3(x, 1.22f, -0.12f), Vector3.zero, $"{id}_Decor");
+            Model("SwitchLever", root.transform, new Vector3(0f, 0f, -0.07f));
             IdPlate(panel, $"PLATE-{id}", new Vector3(x, 1.6f, -0.07f), Vector3.zero, $"{id}\n{load}",
                 null, $"identify.wrong.{id}", null);
         }
@@ -314,78 +481,77 @@ namespace LotoSim.Editor
                 ("_deactivateOnUse", false));
         }
 
+        /// <summary>Texto de la etiqueta LOTO; <see cref="TagLabel"/> completa el nombre en runtime.</summary>
+        private static void AddTagText(GameObject tag)
+        {
+            var text = Label("PELIGRO\nNO OPERAR", tag.transform, new Vector3(0f, -0.028f, -0.003f), Vector3.zero, 0.1f, "#FFFFFF", 0.07f);
+            text.fontStyle = FontStyles.Bold;
+            var body = Label("Técnico\nOT-0427", tag.transform, new Vector3(0f, -0.085f, -0.003f), Vector3.zero, 0.09f, "#1C1F24", 0.07f);
+            body.gameObject.AddComponent<TagLabel>();
+        }
+
         // ---------------------------------------------------------------- Bomba P-101
 
         private static PumpSystem BuildPump(Transform parent, DisconnectSwitch disconnect)
         {
             var group = Empty("P-101_Group", parent, Vector3.zero).transform;
 
-            Box("Skid", group, new Vector3(1f, 0.1f, 1f), new Vector3(2.6f, 0.2f, 0.9f), Graphite);
-            Cylinder("Motor", group, new Vector3(1.8f, 0.6f, 1f), new Vector3(0f, 0f, 90f), new Vector3(0.5f, 0.45f, 0.5f), PumpBlue);
-            Cylinder("FanCover", group, new Vector3(2.3f, 0.6f, 1f), new Vector3(0f, 0f, 90f), new Vector3(0.44f, 0.05f, 0.44f), Graphite);
-            var coupling = Empty("Coupling", group, new Vector3(1.22f, 0.6f, 1f), new Vector3(0f, 0f, 90f));
-            Cylinder("Hub", coupling.transform, Vector3.zero, Vector3.zero, new Vector3(0.2f, 0.08f, 0.2f), Steel, false);
-            Box("Marker", coupling.transform, new Vector3(0.09f, 0f, 0f), new Vector3(0.04f, 0.17f, 0.04f), Yellow, false);
-            Label("P-101", group, new Vector3(1.8f, 1.05f, 0.75f), Vector3.zero, 1.2f, "#2E3238");
+            FitCollider(Model("PumpSkid", group, new Vector3(1f, 0f, 1f)));
+            var coupling = Model("Coupling", group, new Vector3(1.22f, 0.6f, 1f));
+            Label("P-101", group, new Vector3(1.8f, 1.25f, 1f), Vector3.zero, 1.6f, "#2E3238");
 
             // Carcasa: dispara el mantenimiento.
-            var casing = Empty("P-101", group, new Vector3(0.6f, 0.6f, 1f));
-            Cylinder("Volute", casing.transform, Vector3.zero, new Vector3(0f, 0f, 90f), new Vector3(0.62f, 0.17f, 0.62f), PumpBlue);
-            Box("Pedestal", group, new Vector3(0.6f, 0.3f, 1f), new Vector3(0.3f, 0.2f, 0.4f), PumpBlue);
+            var casing = Model("PumpCasing", group, new Vector3(0.6f, 0.6f, 1f), Vector3.zero, "P-101");
+            FitCollider(casing);
 
             // Succión (V-101) hacia el oeste y luego al techo.
-            Cylinder("SuctionPipe", group, new Vector3(-0.885f, 0.6f, 1f), new Vector3(0f, 0f, 90f), new Vector3(0.16f, 1.315f, 0.16f), PipeGreen);
+            Cylinder("SuctionPipe", group, new Vector3(-0.96f, 0.6f, 1f), new Vector3(0f, 0f, 90f), new Vector3(0.16f, 1.24f, 0.16f), PipeGreen);
             Sphere("SuctionElbow", group, new Vector3(-2.2f, 0.6f, 1f), Vector3.one * 0.2f, PipeGreen);
             Cylinder("SuctionRiser", group, new Vector3(-2.2f, 2.3f, 1f), Vector3.zero, new Vector3(0.16f, 1.7f, 0.16f), PipeGreen);
-            var suction = LeverValve(group, "V-101", "la válvula de succión V-101", new Vector3(-0.6f, 0.6f, 1f),
-                handleOffset: new Vector3(0f, 0.16f, 0f), leverLocal: new Vector3(0.14f, 0f, 0f), leverSize: new Vector3(0.3f, 0.03f, 0.05f),
-                closedEuler: new Vector3(0f, 90f, 0f),
-                lockoutPos: new Vector3(0f, 0.16f, 0f), padlockPos: new Vector3(0f, 0.16f, -0.11f), tagPos: new Vector3(0f, 0.03f, -0.16f));
+            Model("Flange", group, new Vector3(-2.2f, 1.6f, 1f));
+            var suction = BallValve(group, "V-101", "la válvula de succión V-101", new Vector3(-0.6f, 0.6f, 1f), Quaternion.identity);
             IdPlate(group, "PLATE-V-101", new Vector3(-0.6f, 0.3f, 0.84f), Vector3.zero, "V-101\nSucción",
                 "identify.V-101", null, "Fuente identificada: válvula de succión V-101 (hidráulica).");
 
-            // Descarga (V-102) vertical hacia el techo.
-            Cylinder("DischargePipe", group, new Vector3(0.6f, 2.45f, 1f), Vector3.zero, new Vector3(0.14f, 1.55f, 0.14f), PipeGreen);
-            var discharge = LeverValve(group, "V-102", "la válvula de descarga V-102", new Vector3(0.6f, 1.5f, 1f),
-                handleOffset: new Vector3(0f, 0f, -0.15f), leverLocal: new Vector3(0f, 0.14f, 0f), leverSize: new Vector3(0.05f, 0.3f, 0.03f),
-                closedEuler: new Vector3(0f, 0f, 90f),
-                lockoutPos: new Vector3(0f, 0f, -0.16f), padlockPos: new Vector3(0.1f, -0.07f, -0.2f), tagPos: new Vector3(0.1f, -0.18f, -0.2f));
-            IdPlate(group, "PLATE-V-102", new Vector3(0.98f, 1.5f, 0.88f), Vector3.zero, "V-102\nDescarga",
+            // Descarga (V-102) vertical hacia el techo: el cuerpo se gira para que la cañería quede vertical
+            // y el vástago mire al frente (-Z).
+            Cylinder("DischargePipe", group, new Vector3(0.6f, 2.53f, 1f), Vector3.zero, new Vector3(0.14f, 1.47f, 0.14f), PipeGreen);
+            Model("Flange", group, new Vector3(0.6f, 2.6f, 1f), new Vector3(90f, 0f, 0f));
+            var dischargeRotation = Quaternion.LookRotation(Vector3.left, Vector3.back);
+            var discharge = BallValve(group, "V-102", "la válvula de descarga V-102", new Vector3(0.6f, 1.5f, 1f), dischargeRotation);
+            IdPlate(group, "PLATE-V-102", new Vector3(0.6f, 1.78f, 0.9f), Vector3.zero, "V-102\nDescarga",
                 "identify.V-102", null, "Fuente identificada: válvula de descarga V-102 (hidráulica).");
 
             // Manómetro PI-101.
-            var gaugeRoot = Empty("PI-101", group, new Vector3(0.6f, 1.12f, 0.86f));
-            Cylinder("Stem", group, new Vector3(0.6f, 1.12f, 0.92f), new Vector3(90f, 0f, 0f), new Vector3(0.03f, 0.06f, 0.03f), Steel, false);
-            Cylinder("Face", gaugeRoot.transform, Vector3.zero, new Vector3(90f, 0f, 0f), new Vector3(0.18f, 0.015f, 0.18f), White);
-            var needlePivot = Empty("NeedlePivot", gaugeRoot.transform, new Vector3(0f, 0f, -0.02f));
-            Box("Needle", needlePivot.transform, new Vector3(0f, 0.035f, 0f), new Vector3(0.008f, 0.07f, 0.004f), Red, false);
-            Label("PI-101", gaugeRoot.transform, new Vector3(0f, -0.13f, 0f), Vector3.zero, 0.22f, "#2E3238", 0.3f);
+            var gaugeRoot = Model("Gauge", group, new Vector3(0.6f, 1.15f, 0.86f), Vector3.zero, "PI-101");
+            var needlePivot = Empty("NeedlePivot", gaugeRoot.transform, new Vector3(0f, 0f, -0.021f));
+            Model("GaugeNeedle", needlePivot.transform, Vector3.zero);
+            Label("PI-101", gaugeRoot.transform, new Vector3(0f, -0.13f, 0f), Vector3.zero, 0.3f, "#2E3238", 0.3f);
+            FitCollider(gaugeRoot);
 
             // Purga V-103 + balde.
-            var bleed = Empty("V-103", group, new Vector3(0.6f, 0.24f, 0.8f));
-            Box("Body", bleed.transform, Vector3.zero, new Vector3(0.1f, 0.1f, 0.12f), Steel);
-            var bleedHandle = Empty("HandlePivot", bleed.transform, new Vector3(0f, 0f, -0.07f));
-            Box("Handle", bleedHandle.transform, Vector3.zero, new Vector3(0.15f, 0.03f, 0.02f), Red, false);
+            var bleed = Model("BleedValve", group, new Vector3(0.6f, 0.33f, 0.74f), Vector3.zero, "V-103");
+            var bleedHandle = Empty("HandlePivot", bleed.transform, new Vector3(0f, 0f, -0.04f), new Vector3(90f, 0f, 0f));
+            Model("ValveHandle", bleedHandle.transform, Vector3.zero, Vector3.zero, null, 0.45f);
+            FitCollider(bleed, 0.04f);
             var bleedValve = bleed.AddComponent<Valve>();
             Set(bleedValve,
                 ("_deviceId", "V-103"),
                 ("_displayName", "la purga V-103"),
                 ("_handle", bleedHandle.transform),
-                ("_activeEuler", new Vector3(0f, 0f, 90f)),
-                ("_inactiveEuler", Vector3.zero),
+                ("_activeEuler", new Vector3(90f, 0f, 90f)),
+                ("_inactiveEuler", new Vector3(90f, 0f, 0f)),
                 ("_startsActive", false));
-            Cylinder("Bucket", group, new Vector3(0.6f, 0.13f, 0.48f), Vector3.zero, new Vector3(0.26f, 0.13f, 0.26f), Steel);
-            IdPlate(group, "PLATE-V-103", new Vector3(1.0f, 0.24f, 0.78f), Vector3.zero, "V-103\nPurga",
+            FitCollider(Model("Bucket", group, new Vector3(0.6f, 0f, 0.55f)));
+            IdPlate(group, "PLATE-V-103", new Vector3(1.0f, 0.3f, 0.7f), Vector3.zero, "V-103\nPurga",
                 "identify.V-103", null, "Fuente identificada: purga V-103 (presión residual).");
 
             // Botonera local CS-101.
             var station = BuildControlStation(parent);
 
             // Herramientas que aparecen tras el mantenimiento.
-            var wrench = Tool(group, "TOOL-WRENCH", "la llave inglesa", "tool.wrench", new Vector3(1.75f, 0.03f, 0.25f),
-                t => Box("Mesh", t, Vector3.zero, new Vector3(0.3f, 0.03f, 0.07f), Steel));
-            var screwdriver = Tool(group, "TOOL-SCREWDRIVER", "el destornillador", "tool.screwdriver", new Vector3(-0.4f, 0.03f, 0.3f),
-                t => Box("Mesh", t, Vector3.zero, new Vector3(0.22f, 0.03f, 0.03f), Red));
+            var wrench = Tool(group, "TOOL-WRENCH", "la llave inglesa", "tool.wrench", new Vector3(1.75f, 0f, 0.25f), "Wrench");
+            var screwdriver = Tool(group, "TOOL-SCREWDRIVER", "el destornillador", "tool.screwdriver", new Vector3(-0.4f, 0f, 0.3f), "Screwdriver");
 
             var pumpCasing = casing.AddComponent<PumpCasing>();
             Set(pumpCasing, ("_spawnOnDone", new Object[] { wrench, screwdriver }));
@@ -401,25 +567,31 @@ namespace LotoSim.Editor
                 ("_suction", suction),
                 ("_discharge", discharge),
                 ("_bleed", bleedValve),
-                ("_coupling", coupling.transform));
+                ("_coupling", coupling.transform),
+                ("_couplingAxis", Vector3.right));
             var gauge = gaugeRoot.AddComponent<PressureGauge>();
             Set(gauge, ("_pump", system), ("_needle", needlePivot.transform));
             return system;
         }
 
-        private static Valve LeverValve(Transform parent, string id, string displayName, Vector3 pos,
-            Vector3 handleOffset, Vector3 leverLocal, Vector3 leverSize, Vector3 closedEuler,
-            Vector3 lockoutPos, Vector3 padlockPos, Vector3 tagPos)
+        /// <summary>
+        /// Válvula esférica con palanca. En coordenadas locales: cañería en X, vástago en +Y.
+        /// Abierta = palanca paralela a la cañería; cerrada = palanca hacia -Z (90° en Y).
+        /// </summary>
+        private static Valve BallValve(Transform parent, string id, string displayName, Vector3 pos, Quaternion rotation)
         {
-            var root = Empty(id, parent, pos);
+            var root = Model("BallValve", parent, pos, Vector3.zero, id);
+            root.transform.localRotation = rotation;
             var t = root.transform;
-            Box("Body", t, Vector3.zero, new Vector3(0.26f, 0.26f, 0.26f), Steel);
-            var pivot = Empty("HandlePivot", t, handleOffset);
-            Box("Lever", pivot.transform, leverLocal, leverSize, Red, false);
+            var pivot = Empty("HandlePivot", t, new Vector3(0f, 0.16f, 0f));
+            Model("ValveHandle", pivot.transform, Vector3.zero);
 
-            var lockout = Box("LOTO_Lockout", t, lockoutPos, new Vector3(0.14f, 0.12f, 0.14f), Red, false);
-            var padlock = Box("LOTO_Padlock", t, padlockPos, new Vector3(0.05f, 0.07f, 0.04f), Red, false);
-            var tag = Box("LOTO_Tag", t, tagPos, new Vector3(0.07f, 0.11f, 0.006f), White, false);
+            // Dispositivos LOTO colocados sobre la palanca cerrada (apuntando a -Z local).
+            var lockout = Model("ValveLockout", t, new Vector3(0f, 0.2f, -0.07f), new Vector3(0f, 90f, 0f), "LOTO_Lockout");
+            var padlock = Model("Padlock", t, new Vector3(0.05f, 0.155f, -0.15f), new Vector3(0f, 90f, 0f), "LOTO_Padlock");
+            var tag = Model("LotoTag", t, new Vector3(0.055f, 0.12f, -0.17f), new Vector3(0f, 0f, 0f), "LOTO_Tag");
+            AddTagText(tag);
+            FitCollider(root);
 
             var valve = root.AddComponent<Valve>();
             Set(valve,
@@ -427,7 +599,7 @@ namespace LotoSim.Editor
                 ("_displayName", displayName),
                 ("_handle", pivot.transform),
                 ("_activeEuler", Vector3.zero),
-                ("_inactiveEuler", closedEuler),
+                ("_inactiveEuler", new Vector3(0f, 90f, 0f)),
                 ("_startsActive", true));
             var socket = root.AddComponent<LotoSocket>();
             Set(socket, ("_requiresLockout", true), ("_lockoutVisual", lockout), ("_padlockVisual", padlock), ("_tagVisual", tag), ("_ghostMaterial", Ghost));
@@ -436,34 +608,34 @@ namespace LotoSim.Editor
 
         private static ControlStation BuildControlStation(Transform parent)
         {
-            var root = Empty("CS-101", parent, new Vector3(2.7f, 0f, -0.1f));
+            var root = Model("ControlStation", parent, new Vector3(2.7f, 0f, -0.1f), Vector3.zero, "CS-101");
             var t = root.transform;
-            Box("Pedestal", t, new Vector3(0f, 0.6f, 0f), new Vector3(0.1f, 1.2f, 0.1f), Steel);
-            Box("Enclosure", t, new Vector3(0f, 1.3f, 0f), new Vector3(0.34f, 0.36f, 0.16f), Graphite);
-            var pilot = Sphere("Pilot", t, new Vector3(0f, 1.43f, -0.085f), Vector3.one * 0.05f, Pilot, false);
-            Label("CS-101", t, new Vector3(0f, 1.56f, -0.085f), Vector3.zero, 0.24f, "#2E3238", 0.4f);
+            var pilot = Model("PilotLight", t, new Vector3(0f, 1.43f, -0.09f), Vector3.zero, "Pilot");
+            Label("CS-101", t, new Vector3(0f, 1.56f, -0.085f), Vector3.zero, 0.3f, "#2E3238", 0.4f);
+            FitCollider(root);
 
             var station = root.AddComponent<ControlStation>();
-            Set(station, ("_pilotLight", pilot.GetComponent<Renderer>()));
+            Set(station, ("_pilotLight", pilot.GetComponentInChildren<Renderer>()));
 
-            ButtonPart(t, station, true, new Vector3(-0.075f, 1.29f, -0.085f), Green, "START");
-            ButtonPart(t, station, false, new Vector3(0.075f, 1.29f, -0.085f), Red, "STOP");
+            ButtonPart(t, station, true, new Vector3(-0.075f, 1.29f, -0.095f), Green, "START");
+            ButtonPart(t, station, false, new Vector3(0.075f, 1.29f, -0.095f), Red, "STOP");
             return station;
         }
 
         private static void ButtonPart(Transform parent, ControlStation station, bool isStart, Vector3 pos, Material mat, string text)
         {
-            var root = Empty(isStart ? "StartButton" : "StopButton", parent, pos);
-            Cylinder("Cap", root.transform, Vector3.zero, new Vector3(90f, 0f, 0f), new Vector3(0.07f, 0.02f, 0.07f), mat);
-            Label(text, root.transform, new Vector3(0f, -0.07f, -0.005f), Vector3.zero, 0.16f, "#FFFFFF", 0.15f);
+            var root = Model("PushButton", parent, pos, Vector3.zero, isStart ? "StartButton" : "StopButton");
+            Recolor(root, mat);
+            FitCollider(root, 0.02f);
+            Label(text, parent, new Vector3(pos.x, 1.225f, -0.086f), Vector3.zero, 0.13f, "#1C1F24", 0.07f);
             var button = root.AddComponent<ControlButton>();
             Set(button, ("_station", station), ("_isStart", isStart));
         }
 
-        private static GameObject Tool(Transform parent, string id, string name, string flag, Vector3 pos, MeshFactory mesh)
+        private static GameObject Tool(Transform parent, string id, string name, string flag, Vector3 pos, string model)
         {
-            var root = Empty(id, parent, pos);
-            mesh(root.transform);
+            var root = Model(model, parent, pos, new Vector3(0f, 30f, 0f), id);
+            FitCollider(root, 0.06f);
             var interactable = root.AddComponent<SignalInteractable>();
             Set(interactable,
                 ("_prompt", $"Recoger {name}"),
@@ -478,15 +650,14 @@ namespace LotoSim.Editor
 
         private static void BuildOperator(Transform parent)
         {
-            var desk = Empty("OperatorDesk", parent, new Vector3(3.9f, 0f, -2.7f)).transform;
-            Box("Desk", desk, new Vector3(0f, 0.4f, 0f), new Vector3(0.7f, 0.8f, 1.4f), Graphite);
-            Box("Monitor", desk, new Vector3(0.15f, 1.05f, 0f), new Vector3(0.06f, 0.4f, 0.6f), Dark);
-            Box("Radio", desk, new Vector3(-0.15f, 0.88f, 0.45f), new Vector3(0.08f, 0.16f, 0.05f), Dark);
+            var desk = Model("Desk", parent, new Vector3(3.9f, 0f, -2.7f), Vector3.zero, "OperatorDesk");
+            FitCollider(desk);
+            Model("Monitor", desk.transform, new Vector3(0.1f, 0.78f, 0f), new Vector3(0f, -90f, 0f));
+            Model("Radio", desk.transform, new Vector3(-0.15f, 0.78f, 0.45f), new Vector3(0f, -90f, 0f));
 
-            var root = Empty("OPERATOR", parent, new Vector3(4.65f, 0f, -2.7f));
-            Capsule("Body", root.transform, new Vector3(0f, 0.9f, 0f), new Vector3(0.5f, 0.9f, 0.5f), Worker);
-            Sphere("Helmet", root.transform, new Vector3(0f, 1.82f, 0f), new Vector3(0.3f, 0.16f, 0.3f), Yellow, false);
-            Label("Operador", root.transform, new Vector3(0f, 2.15f, 0f), new Vector3(0f, 90f, 0f), 0.4f, "#2E3238");
+            var root = Model("Operator", parent, new Vector3(4.65f, 0f, -2.7f), new Vector3(0f, 90f, 0f), "OPERATOR");
+            FitCollider(root);
+            Label("Operador", root.transform, new Vector3(0f, 2.05f, 0f), Vector3.zero, 0.5f, "#2E3238");
 
             var source = root.AddComponent<DialogueSource>();
             Set(source,
@@ -514,6 +685,7 @@ namespace LotoSim.Editor
             public DesktopInteractor Interactor;
             public DesktopLook Look;
             public StationTeleport Stations;
+            public FirstPersonMotor Motor;
         }
 
         private static PlayerRefs BuildPlayer(Transform parent)
@@ -524,7 +696,7 @@ namespace LotoSim.Editor
             controller.center = new Vector3(0f, 0.9f, 0f);
             controller.height = 1.8f;
             controller.radius = 0.3f;
-            player.AddComponent<FirstPersonMotor>();
+            var motor = player.AddComponent<FirstPersonMotor>();
             var kit = player.AddComponent<LotoKit>();
 
             var cameraGo = Empty("PlayerCamera", player.transform, new Vector3(0f, 1.65f, 0f));
@@ -533,9 +705,13 @@ namespace LotoSim.Editor
             camera.fieldOfView = 70f;
             camera.nearClipPlane = 0.05f;
             camera.farClipPlane = 60f;
+            var cameraData = cameraGo.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            cameraData.renderPostProcessing = true;
+            cameraData.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.FastApproximateAntialiasing;
             cameraGo.AddComponent<AudioListener>();
 
             var interactor = cameraGo.AddComponent<DesktopInteractor>();
+            cameraGo.AddComponent<HoverOutline>();
             Set(interactor, ("_camera", camera), ("_kit", kit));
 
             var look = player.AddComponent<DesktopLook>();
@@ -563,7 +739,7 @@ namespace LotoSim.Editor
             }
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            return new PlayerRefs { Kit = kit, Interactor = interactor, Look = look, Stations = stations };
+            return new PlayerRefs { Kit = kit, Interactor = interactor, Look = look, Stations = stations, Motor = motor };
         }
 
         // ---------------------------------------------------------------- UI
@@ -604,7 +780,7 @@ namespace LotoSim.Editor
             var prompt = Text("Text", promptRect, 26, TextAlignmentOptions.Top);
             var hintRect = Rect("Hint", canvas, Center, Center, new Vector2(0f, 90f), new Vector2(1200f, 60f));
             var hint = Text("Text", hintRect, 32, TextAlignmentOptions.Center,
-                "<mark=#1C1F24CC padding=\"24,24,10,10\">Hacé click para controlar la cámara</mark>");
+                "<mark=#1C1F24CC padding=\"24,24,10,10\">Hacé click para controlar la cámara\n<size=70%>WASD para moverte · F3 diagnóstico de entrada</size></mark>");
 
             // Kit.
             var kitPanel = Panel("KitBar", canvas, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(1300f, 56f));
@@ -641,8 +817,12 @@ namespace LotoSim.Editor
             Text("SensLabel", Rect("SensLabelRect", pauseBox.transform, Center, Center, new Vector2(0f, -80f), new Vector2(360f, 30f)),
                 22, TextAlignmentOptions.Left, "Sensibilidad del mouse");
             var slider = Slider("Sensitivity", pauseBox.transform, new Vector2(0f, -120f), new Vector2(360f, 24f));
-            var invert = Toggle("InvertY", pauseBox.transform, new Vector2(0f, -175f), "Invertir eje vertical");
+            var invert = Toggle("InvertY", pauseBox.transform, new Vector2(0f, -165f), "Invertir eje vertical");
+            Text("VolumeLabel", Rect("VolumeLabelRect", pauseBox.transform, Center, Center, new Vector2(0f, -205f), new Vector2(360f, 30f)),
+                22, TextAlignmentOptions.Left, "Volumen");
+            var volume = Slider("Volume", pauseBox.transform, new Vector2(0f, -240f), new Vector2(360f, 24f));
 
+            BuildInputDebug(canvas, player);
             BuildBriefing(canvas);
             BuildReport(canvas);
             BuildFade(canvas);
@@ -656,7 +836,7 @@ namespace LotoSim.Editor
                 ("_dialoguePanel", dialoguePanel.gameObject), ("_dialogueText", dialogueText),
                 ("_stationPanel", stationPanel.gameObject), ("_stationText", stationText),
                 ("_pausePanel", pause.gameObject), ("_resumeButton", resume), ("_restartButton", restart), ("_menuButton", menu),
-                ("_sensitivitySlider", slider), ("_invertToggle", invert));
+                ("_sensitivitySlider", slider), ("_invertToggle", invert), ("_volumeSlider", volume));
         }
 
         public static Canvas CreateCanvas(Transform parent, string name, int sortingOrder)
@@ -671,6 +851,15 @@ namespace LotoSim.Editor
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
             return canvas;
+        }
+
+        private static void BuildInputDebug(Transform canvas, PlayerRefs player)
+        {
+            var panel = Panel("InputDebug", canvas, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 96f), new Vector2(820f, 330f), "#0E1013", 0.88f);
+            var text = Text("Text", panel.transform, 20, TextAlignmentOptions.TopLeft);
+            text.margin = new Vector4(18f, 14f, 18f, 12f);
+            var overlay = canvas.gameObject.AddComponent<InputDebugOverlay>();
+            Set(overlay, ("_panel", panel.gameObject), ("_text", text), ("_motor", player.Motor));
         }
 
         private static void BuildBriefing(Transform canvas)

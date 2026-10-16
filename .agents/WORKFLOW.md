@@ -30,9 +30,17 @@
 - Capturas de verificación: Game View a 1280×720.
 
 ### Verificación en Play Mode por MCP
-- Sin foco, Unity no avanza el loop de juego: usar `editor_focus` antes de capturar la Game View (roba el foco: avisar).
-- Los clicks/teclas simulados no llegan si la Game View no tiene foco (`editorInputBehaviorInPlayMode` respeta el foco). Para lógica, preferir los Play Mode tests; el input real se prueba en la build WebGL.
+- Sin foco del sistema, Unity casi no avanza (ni el loop de juego ni la cola del puente MCP): hay que traerlo al frente (`editor_focus`, o PowerShell `SetForegroundWindow` con el truco de Alt) antes de capturar o correr tests. Roba el foco: avisar al usuario.
+- Las teclas **reales** que manda el agente (Alt para ganar foco) pisan el estado del teclado simulado de los tests: no apretar teclas reales mientras corre un test de input.
+- Los tests de input fuerzan `InputSettings.backgroundBehavior = IgnoreFocus` y esperan **tiempo de juego** (no frames).
+- `LotoSim/Tests/Correr Edit Mode|Play Mode` (`TestRunTool`) deja el resultado en `Logs/test-results.txt`. **Cuidado:** si la escena abierta tiene cambios sin guardar, el Test Runner abre el diálogo modal *Scene(s) Have Been Modified* y bloquea el editor (y el puente MCP); `TestRunTool` la guarda antes, pero un `*` en el título es la señal.
+- `LotoSim/Build/WebGL` (`BuildTool`) compila a `Builds/WebGL` y deja el resultado en `Logs/build-results.txt` (~3 min).
 - `PlayerSettings.runInBackground` está activado.
+
+### Probar la build WebGL con un Chrome real (CDP)
+- Servir `Builds/WebGL` con `python -I -m http.server <puerto> --bind 127.0.0.1` y abrir Chrome con `--remote-debugging-port` y un `--user-data-dir` temporal; **no matar procesos `chrome` a ciegas** (cierra también el Chrome del usuario: filtrar por la línea de comando).
+- Para teclado/mouse de confianza usar `Input.dispatchMouseEvent` / `Input.dispatchKeyEvent` por CDP, con `Emulation.setFocusEmulationEnabled` y `Page.bringToFront`; sin foco emulado la pestaña se congela al recibir teclas.
+- Una tecla mantenida necesita `keyDown` + `keyDown(autoRepeat)` durante el intervalo (un press de pocos ms cae entre dos frames y el Input System no lo ve).
 
 ## Blender
 - Fuentes en `Blender/`, scripts en `Blender/scripts/`. Ejecutar headless:

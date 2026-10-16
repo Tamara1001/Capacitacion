@@ -23,6 +23,7 @@ namespace LotoSim.Player
         private InputAction[] _slots;
 
         public IReadOnlyList<Station> Stations => _stations;
+        public bool IsOpen => OverlayMenu.IsOpenBy(this);
         public static event Action MenuChanged;
 
         private void Awake()
@@ -51,10 +52,10 @@ namespace LotoSim.Player
             }
             if (_toggle.WasPressedThisFrame())
             {
-                SetOpen(!OverlayMenu.IsOpen);
+                SetOpen(!IsOpen);
                 return;
             }
-            if (!OverlayMenu.IsOpen)
+            if (!IsOpen)
                 return;
             for (int i = 0; i < _slots.Length && i < _stations.Count; i++)
             {
@@ -73,11 +74,14 @@ namespace LotoSim.Player
             ScreenFade.Run(() => _motor.Teleport(point.position, point.eulerAngles.y));
         }
 
-        private static void SetOpen(bool open)
+        private void SetOpen(bool open)
         {
-            if (OverlayMenu.IsOpen == open)
+            if (open == IsOpen)
                 return;
-            OverlayMenu.IsOpen = open;
+            if (open && !OverlayMenu.TryOpen(this))
+                return;
+            if (!open)
+                OverlayMenu.Close(this);
             MenuChanged?.Invoke();
         }
 

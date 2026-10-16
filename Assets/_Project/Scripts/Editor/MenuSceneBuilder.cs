@@ -72,13 +72,16 @@ namespace LotoSim.Editor
             // Opciones.
             var optionsPanel = Panel("OptionsPanel", canvas, Center, Center, Vector2.zero, Vector2.zero, "#000000", 0.7f);
             StretchFull(optionsPanel.rectTransform);
-            var optionsBox = Panel("Box", optionsPanel.transform, Center, Center, Vector2.zero, new Vector2(560f, 380f), "#1C1F24", 1f);
+            var optionsBox = Panel("Box", optionsPanel.transform, Center, Center, Vector2.zero, new Vector2(560f, 440f), "#1C1F24", 1f);
             Text("Title", optionsBox.transform, 36, TextAlignmentOptions.Top, "<b>Opciones</b>").margin = new Vector4(0f, 28f, 0f, 0f);
             Text("SensLabel", Rect("SensLabelRect", optionsBox.transform, Center, Center, new Vector2(0f, 70f), new Vector2(400f, 30f)),
                 22, TextAlignmentOptions.Left, "Sensibilidad del mouse");
             var slider = Slider("Sensitivity", optionsBox.transform, new Vector2(0f, 30f), new Vector2(400f, 24f));
-            var invert = Toggle("InvertY", optionsBox.transform, new Vector2(20f, -30f), "Invertir eje vertical");
-            var optionsClose = Button("Close", optionsBox.transform, new Vector2(0f, -130f), new Vector2(300f, 60f), "Listo");
+            var invert = Toggle("InvertY", optionsBox.transform, new Vector2(20f, -20f), "Invertir eje vertical");
+            Text("VolumeLabel", Rect("VolumeLabelRect", optionsBox.transform, Center, Center, new Vector2(0f, -60f), new Vector2(400f, 30f)),
+                22, TextAlignmentOptions.Left, "Volumen");
+            var volume = Slider("Volume", optionsBox.transform, new Vector2(0f, -95f), new Vector2(400f, 24f));
+            var optionsClose = Button("Close", optionsBox.transform, new Vector2(0f, -160f), new Vector2(300f, 60f), "Listo");
 
             // Créditos.
             var creditsPanel = Panel("CreditsPanel", canvas, Center, Center, Vector2.zero, Vector2.zero, "#000000", 0.7f);
@@ -87,8 +90,9 @@ namespace LotoSim.Editor
             var creditsText = Text("Text", creditsBox.transform, 22, TextAlignmentOptions.TopLeft,
                 "<size=150%><b>Créditos</b></size>\n\n" +
                 "<b>Contenido técnico</b>\nOSHA 29 CFR 1910.147 · The control of hazardous energy (lockout/tagout) y su tutorial interactivo.\n\n" +
-                "<b>Desarrollo</b>\nDemo desarrollada en Unity 6 (URP).\n\n" +
-                "<b>Recursos de terceros</b>\nFuente LiberationSans (SIL OFL). Se listarán aquí los recursos CC0 que se incorporen.");
+                "<b>Desarrollo</b>\nDemo desarrollada en Unity 6 (URP). Modelos 3D propios generados en Blender.\n\n" +
+                "<b>Recursos de terceros</b>\nTipografía Barlow · The Barlow Project Authors (SIL Open Font License).\n" +
+                "Efectos de sonido · Kenney Impact Sounds e Interface Sounds (CC0, kenney.nl).");
             creditsText.margin = new Vector4(36f, 32f, 36f, 100f);
             var creditsClose = Button("Close", creditsBox.transform, new Vector2(0f, -220f), new Vector2(300f, 60f), "Cerrar");
 
@@ -96,9 +100,10 @@ namespace LotoSim.Editor
             Set(controller,
                 ("_nameInput", nameInput), ("_guidedButton", guided), ("_assessmentButton", assessment),
                 ("_optionsButton", options), ("_creditsButton", credits),
-                ("_optionsPanel", optionsPanel.gameObject), ("_sensitivitySlider", slider), ("_invertToggle", invert),
+                ("_optionsPanel", optionsPanel.gameObject), ("_sensitivitySlider", slider), ("_invertToggle", invert), ("_volumeSlider", volume),
                 ("_optionsCloseButton", optionsClose), ("_creditsPanel", creditsPanel.gameObject), ("_creditsCloseButton", creditsClose));
 
+            GreyboxSceneBuilder.AddUiSounds(canvas.gameObject);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log("[LotoSim] Escena Menu construida");

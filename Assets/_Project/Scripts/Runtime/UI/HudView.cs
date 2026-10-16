@@ -103,6 +103,9 @@ namespace LotoSim.UI
         [SerializeField]
         private Toggle _invertToggle;
 
+        [SerializeField]
+        private Slider _volumeSlider;
+
         private const int MaxToasts = 3;
 
         private readonly StringBuilder _builder = new();
@@ -121,6 +124,8 @@ namespace LotoSim.UI
             _sensitivitySlider.onValueChanged.AddListener(OnSensitivityChanged);
             _invertToggle.SetIsOnWithoutNotify(Settings.InvertY);
             _invertToggle.onValueChanged.AddListener(OnInvertChanged);
+            _volumeSlider.SetValueWithoutNotify(Settings.MasterVolume);
+            _volumeSlider.onValueChanged.AddListener(v => Settings.MasterVolume = v);
 
             _toastPanel.SetActive(false);
             _dialoguePanel.SetActive(false);
@@ -254,8 +259,9 @@ namespace LotoSim.UI
 
         private void RefreshStations()
         {
-            _stationPanel.SetActive(OverlayMenu.IsOpen);
-            if (!OverlayMenu.IsOpen || _stations == null)
+            bool open = _stations != null && _stations.IsOpen;
+            _stationPanel.SetActive(open);
+            if (!open)
                 return;
             _builder.Clear();
             _builder.Append($"<b><color={GuideColor}>Ir a…</color></b>\n\n");
