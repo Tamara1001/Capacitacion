@@ -1,0 +1,19 @@
+{
+    "name": "LotoSim.Editor",
+    "rootNamespace": "LotoSim.Editor",
+    "references": [
+        "LotoSim.Runtime",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

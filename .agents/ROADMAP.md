@@ -5,15 +5,15 @@ Marcar `[x]` al completar. Cada hito termina con una build WebGL probada.
 
 ## M0 — Setup del proyecto (día 1)
 - [x] Definir scope y documentación `.agents/`
-- [ ] Quitar paquetes Visual Scripting y Multiplayer Center
-- [ ] Borrar contenido de plantilla (`TutorialInfo/`, `Readme.asset`, `SampleScene`)
-- [ ] Verificar `.gitattributes` LFS (fbx, blend, png, wav, ttf…) y `.gitignore` (`Builds/`)
-- [ ] Crear estructura de carpetas `Assets/_Project` y `Blender/` (STRUCTURE.md)
-- [ ] Assembly definitions Runtime / Editor / Tests
-- [ ] `LotoSim.inputactions` con mapas *Player* y *UI* (DESIGN.md §Controles)
-- [ ] Escenas `Menu` y `PumpRoom` en Build Settings; plataforma Web; settings WebGL base
-- [ ] Localizar Blender y anotar ruta en WORKFLOW.md
-- [ ] Build WebGL vacía de prueba
+- [x] Quitar paquetes Visual Scripting y Multiplayer Center
+- [x] Borrar contenido de plantilla (`TutorialInfo/`, `Readme.asset`, `SampleScene`)
+- [x] Verificar `.gitattributes` LFS (fbx, blend, png, wav, ttf…) y `.gitignore` (`Builds/`)
+- [x] Crear estructura de carpetas `Assets/_Project` y `Blender/` (STRUCTURE.md)
+- [x] Assembly definitions Runtime / Editor / Tests
+- [x] `LotoSim.inputactions` con mapas *Player* y *UI* (DESIGN.md §Controles)
+- [x] Escenas `Menu` y `PumpRoom` en Build Settings; plataforma Web; settings WebGL base
+- [x] Localizar Blender y anotar ruta en WORKFLOW.md
+- [x] Build WebGL vacía de prueba (11 MB, OK)
 
 ## M1 — Greybox jugable (días 2–4) ⭐ prioridad
 - [ ] Sala greybox con primitivas (paredes, bomba, tablero, botonera, estación LOTO, locker, operador)
@@ -53,6 +53,7 @@ Marcar `[x]` al completar. Cada hito termina con una build WebGL probada.
 
 ## M4 — Pulido, rendimiento y entrega (días 10–12)
 - [ ] Perf en notebook con GPU integrada: ≥30 FPS, build < 50 MB, carga < 20 s
+- [ ] Evaluar excluir shaders de `com.unity.ai.inference` (Sentis) de la build: generan ~350 warnings y peso extra (verificar que no rompa AI Assistant/MCP)
 - [ ] WebGL template propio + página de itch (capturas, descripción)
 - [ ] QA: recorrer ambos modos, todos los errores, reintentar, volver al menú
 - [ ] Revisión de textos (ortografía, tono)

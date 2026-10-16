@@ -4,7 +4,8 @@
 - Unity **6000.3.14f1**, URP 17.3, Input System 1.19 (Input Manager legado desactivado).
 - Repo: `https://github.com/Tamara1001/Capacitacion` — rama única `main`.
 - Herramientas disponibles para agentes: Unity MCP (escena, assets, consola, tests, build), Blender (headless por scripts), ffmpeg (procesar audio/video de referencia), git + Git LFS, GitHub CLI.
-- **Blender:** no está en el PATH. Antes de la primera tarea de modelado, localizar el ejecutable y anotarlo acá: `BLENDER_EXE = <ruta pendiente>`.
+- **Blender 5.2.2 LTS** (Steam, no está en el PATH): `BLENDER_EXE = D:/Programas/Steam/steamapps/common/Blender/blender.exe`.
+- Módulos de build instalados: Web (activo), Windows, **Android** (servirá para Quest en v2).
 
 ## Git
 - Commits directos a `main` (decisión del proyecto). Pushear al cerrar cada tarea del ROADMAP.

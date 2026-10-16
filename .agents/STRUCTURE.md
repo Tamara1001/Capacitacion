@@ -6,6 +6,7 @@ Capacitacion/
 ├─ .agents/                 Documentación para agentes (este directorio)
 ├─ Assets/
 │  ├─ _Project/             TODO lo propio va acá
+│  ├─ Settings/             URP assets y Volume profiles (de la plantilla; se dejan en su lugar)
 │  └─ ThirdParty/           Assets externos sin modificar (Kenney, fuentes, etc.)
 ├─ Blender/                 Fuentes .blend y scripts de generación (LFS) — fuera de Assets
 │  ├─ scripts/              *.py ejecutables con `blender -b -P`
@@ -34,7 +35,7 @@ _Project/
 │  ├─ Tasks/         TASK_S3_CloseV102.asset …
 │  ├─ Hazards/       HZ_BleedBeforeIsolate.asset …
 │  └─ Items/         ITEM_Padlock.asset, ITEM_Tag.asset …
-├─ Input/            LotoSim.inputactions
+├─ Input/            LotoSim.inputactions (asignado como acciones project-wide)
 ├─ Prefabs/
 │  ├─ Devices/       PF_DisconnectSwitch, PF_LeverValve, PF_BleedValve, PF_Gauge, PF_ControlStation
 │  ├─ Loto/          PF_Padlock, PF_Tag, PF_ValveLockout, PF_LotoStation
@@ -52,7 +53,6 @@ _Project/
 │  └─ Tests/
 │     ├─ EditMode/   LotoSim.Tests.EditMode.asmdef
 │     └─ PlayMode/   LotoSim.Tests.PlayMode.asmdef
-├─ Settings/         URP assets, Volume profiles, Lighting settings propios
 └─ UI/
    ├─ Fonts/         TMP font assets
    └─ Sprites/       Íconos (EPP, candado, etiqueta…)
