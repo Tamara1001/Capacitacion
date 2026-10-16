@@ -106,6 +106,9 @@ namespace LotoSim.UI
         [SerializeField]
         private Slider _volumeSlider;
 
+        [SerializeField]
+        private Toggle _lowQualityToggle;
+
         private const int MaxToasts = 3;
 
         private readonly StringBuilder _builder = new();
@@ -126,6 +129,12 @@ namespace LotoSim.UI
             _invertToggle.onValueChanged.AddListener(OnInvertChanged);
             _volumeSlider.SetValueWithoutNotify(Settings.MasterVolume);
             _volumeSlider.onValueChanged.AddListener(v => Settings.MasterVolume = v);
+            _lowQualityToggle.SetIsOnWithoutNotify(Settings.LowQuality);
+            _lowQualityToggle.onValueChanged.AddListener(v =>
+            {
+                Settings.LowQuality = v;
+                Services.Get<QualityController>()?.Apply(v);
+            });
 
             _toastPanel.SetActive(false);
             _dialoguePanel.SetActive(false);

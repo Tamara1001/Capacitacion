@@ -91,6 +91,7 @@ namespace LotoSim.Editor
             runner.transform.SetParent(systems, false);
             Set(runner, ("_procedure", procedure), ("_pump", pump));
             BuildEvaluationAndGuidance(systems, runner, pump, player.Kit);
+            new GameObject("QualityController").AddComponent<QualityController>().transform.SetParent(systems, false);
             AddHighlightTargets(scene);
             BuildAudio(systems, pump, player);
 
@@ -780,7 +781,7 @@ namespace LotoSim.Editor
             var prompt = Text("Text", promptRect, 26, TextAlignmentOptions.Top);
             var hintRect = Rect("Hint", canvas, Center, Center, new Vector2(0f, 90f), new Vector2(1200f, 60f));
             var hint = Text("Text", hintRect, 32, TextAlignmentOptions.Center,
-                "<mark=#1C1F24CC padding=\"24,24,10,10\">Hacé click para controlar la cámara\n<size=70%>WASD para moverte · el diagnóstico de entrada está abajo a la izquierda</size></mark>");
+                "<mark=#1C1F24CC padding=\"24,24,10,10\">Hacé click para controlar la cámara\n<size=70%>WASD para moverte · Esc para pausar</size></mark>");
 
             // Kit.
             var kitPanel = Panel("KitBar", canvas, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(1300f, 56f));
@@ -808,7 +809,7 @@ namespace LotoSim.Editor
             // Pausa + opciones.
             var pause = Panel("Pause", canvas, Center, Center, Vector2.zero, Vector2.zero, "#000000", 0.6f);
             StretchFull(pause.rectTransform);
-            var pauseBox = Panel("Box", pause.transform, Center, Center, Vector2.zero, new Vector2(560f, 660f));
+            var pauseBox = Panel("Box", pause.transform, Center, Center, Vector2.zero, new Vector2(560f, 730f));
             var pauseTitle = Text("Title", pauseBox.transform, 40, TextAlignmentOptions.Top, "<b>Pausa</b>");
             pauseTitle.margin = new Vector4(0f, 28f, 0f, 0f);
             var resume = Button("Resume", pauseBox.transform, new Vector2(0f, 150f), new Vector2(360f, 60f), "Continuar");
@@ -821,7 +822,8 @@ namespace LotoSim.Editor
             Text("VolumeLabel", Rect("VolumeLabelRect", pauseBox.transform, Center, Center, new Vector2(0f, -205f), new Vector2(360f, 30f)),
                 22, TextAlignmentOptions.Left, "Volumen");
             var volume = Slider("Volume", pauseBox.transform, new Vector2(0f, -240f), new Vector2(360f, 24f));
-            var diagToggle = Toggle("InputDiag", pauseBox.transform, new Vector2(20f, -295f), "Mostrar diagnóstico de entrada");
+            var qualityToggle = Toggle("LowQuality", pauseBox.transform, new Vector2(20f, -295f), "Calidad baja (más fluido)");
+            var diagToggle = Toggle("InputDiag", pauseBox.transform, new Vector2(20f, -340f), "Mostrar diagnóstico de entrada");
 
             BuildInputDebug(canvas, player, diagToggle);
             BuildBriefing(canvas);
@@ -837,7 +839,7 @@ namespace LotoSim.Editor
                 ("_dialoguePanel", dialoguePanel.gameObject), ("_dialogueText", dialogueText),
                 ("_stationPanel", stationPanel.gameObject), ("_stationText", stationText),
                 ("_pausePanel", pause.gameObject), ("_resumeButton", resume), ("_restartButton", restart), ("_menuButton", menu),
-                ("_sensitivitySlider", slider), ("_invertToggle", invert), ("_volumeSlider", volume));
+                ("_sensitivitySlider", slider), ("_invertToggle", invert), ("_volumeSlider", volume), ("_lowQualityToggle", qualityToggle));
         }
 
         public static Canvas CreateCanvas(Transform parent, string name, int sortingOrder)

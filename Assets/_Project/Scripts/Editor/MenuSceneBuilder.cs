@@ -72,7 +72,7 @@ namespace LotoSim.Editor
             // Opciones.
             var optionsPanel = Panel("OptionsPanel", canvas, Center, Center, Vector2.zero, Vector2.zero, "#000000", 0.7f);
             StretchFull(optionsPanel.rectTransform);
-            var optionsBox = Panel("Box", optionsPanel.transform, Center, Center, Vector2.zero, new Vector2(560f, 440f), "#1C1F24", 1f);
+            var optionsBox = Panel("Box", optionsPanel.transform, Center, Center, Vector2.zero, new Vector2(560f, 500f), "#1C1F24", 1f);
             Text("Title", optionsBox.transform, 36, TextAlignmentOptions.Top, "<b>Opciones</b>").margin = new Vector4(0f, 28f, 0f, 0f);
             Text("SensLabel", Rect("SensLabelRect", optionsBox.transform, Center, Center, new Vector2(0f, 70f), new Vector2(400f, 30f)),
                 22, TextAlignmentOptions.Left, "Sensibilidad del mouse");
@@ -81,7 +81,8 @@ namespace LotoSim.Editor
             Text("VolumeLabel", Rect("VolumeLabelRect", optionsBox.transform, Center, Center, new Vector2(0f, -60f), new Vector2(400f, 30f)),
                 22, TextAlignmentOptions.Left, "Volumen");
             var volume = Slider("Volume", optionsBox.transform, new Vector2(0f, -95f), new Vector2(400f, 24f));
-            var optionsClose = Button("Close", optionsBox.transform, new Vector2(0f, -160f), new Vector2(300f, 60f), "Listo");
+            var qualityToggle = Toggle("LowQuality", optionsBox.transform, new Vector2(20f, -140f), "Calidad baja (más fluido)");
+            var optionsClose = Button("Close", optionsBox.transform, new Vector2(0f, -200f), new Vector2(300f, 60f), "Listo");
 
             // Créditos.
             var creditsPanel = Panel("CreditsPanel", canvas, Center, Center, Vector2.zero, Vector2.zero, "#000000", 0.7f);
@@ -100,7 +101,7 @@ namespace LotoSim.Editor
             Set(controller,
                 ("_nameInput", nameInput), ("_guidedButton", guided), ("_assessmentButton", assessment),
                 ("_optionsButton", options), ("_creditsButton", credits),
-                ("_optionsPanel", optionsPanel.gameObject), ("_sensitivitySlider", slider), ("_invertToggle", invert), ("_volumeSlider", volume),
+                ("_optionsPanel", optionsPanel.gameObject), ("_sensitivitySlider", slider), ("_invertToggle", invert), ("_volumeSlider", volume), ("_lowQualityToggle", qualityToggle),
                 ("_optionsCloseButton", optionsClose), ("_creditsPanel", creditsPanel.gameObject), ("_creditsCloseButton", creditsClose));
 
             GreyboxSceneBuilder.AddUiSounds(canvas.gameObject);

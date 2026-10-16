@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{{ PRODUCT_NAME }}}</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231C1F24'/%3E%3Crect x='14' y='28' width='36' height='8' rx='3' fill='%23FFC629'/%3E%3Ccircle cx='32' cy='32' r='9' fill='%23D3272E'/%3E%3C/svg%3E">
+    <style>
+      :root {
+        --bg: #0E1013;
+        --panel: #1C1F24;
+        --text: #E6E8EB;
+        --muted: #9CA3AF;
+        --accent: #FFC629;
+        --error: #E5484D;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+        font-family: "Barlow", "Segoe UI", system-ui, -apple-system, sans-serif; overflow: hidden; }
+      #app { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      #unity-container { position: relative; width: min(100vw, calc((100vh - 40px) * 16 / 9));
+        aspect-ratio: 16 / 9; background: #000; box-shadow: 0 8px 40px rgba(0, 0, 0, .55); }
+      #unity-canvas { display: block; width: 100%; height: 100%; background: #000; outline: none; }
+
+      #loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 14px; background: radial-gradient(circle at 50% 40%, #232830 0%, var(--bg) 70%); }
+      #loading .eyebrow { color: var(--accent); letter-spacing: .18em; font-size: clamp(11px, 1.3vw, 16px); font-weight: 600; }
+      #loading h1 { margin: 0; font-size: clamp(28px, 5vw, 64px); font-weight: 700; letter-spacing: .01em; }
+      #loading p { margin: 0; color: var(--muted); font-size: clamp(12px, 1.5vw, 18px); }
+      #bar { width: min(420px, 60%); height: 8px; border-radius: 4px; background: #2E3238; overflow: hidden; margin-top: 10px; }
+      #bar > div { height: 100%; width: 0%; background: var(--accent); transition: width .15s linear; }
+      #status { color: var(--muted); font-size: clamp(11px, 1.2vw, 14px); min-height: 1.2em; }
+
+      #banner { position: absolute; left: 0; right: 0; top: 0; z-index: 5; display: none; }
+      #banner div { margin: 8px; padding: 10px 14px; border-radius: 6px; font-size: 14px; background: var(--panel);
+        border-left: 4px solid var(--accent); }
+      #banner div.error { border-left-color: var(--error); }
+
+      #footer { width: min(100vw, calc((100vh - 40px) * 16 / 9)); height: 40px; display: flex; align-items: center;
+        justify-content: space-between; padding: 0 4px; color: var(--muted); font-size: 13px; }
+      #footer b { color: var(--text); font-weight: 600; }
+      #footer button { background: var(--panel); color: var(--text); border: 1px solid #2E3238; border-radius: 6px;
+        padding: 5px 12px; font: inherit; cursor: pointer; }
+      #footer button:hover { border-color: var(--accent); }
+
+      #touch { position: absolute; inset: 0; z-index: 6; display: none; align-items: center; justify-content: center;
+        text-align: center; padding: 24px; background: rgba(14, 16, 19, .94); }
+      #touch.show { display: flex; }
+      #touch h2 { margin: 0 0 8px; }
+      #touch p { margin: 0; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="unity-container">
+        <canvas id="unity-canvas" width="{{{ WIDTH }}}" height="{{{ HEIGHT }}}" tabindex="0"></canvas>
+
+        <div id="loading">
+          <div class="eyebrow">CAPACITACIÓN EN SEGURIDAD INDUSTRIAL</div>
+          <h1>{{{ PRODUCT_NAME }}}</h1>
+          <p>Bloqueo y etiquetado de energías peligrosas</p>
+          <div id="bar"><div id="bar-fill"></div></div>
+          <div id="status">Cargando…</div>
+        </div>
+
+        <div id="banner"></div>
+
+        <div id="touch">
+          <div>
+            <h2>Esta demo se usa con teclado y mouse</h2>
+            <p>Abrila desde una computadora. En celulares y tablets no se puede caminar ni apuntar.</p>
+            <p style="margin-top:16px"><button id="touch-continue" style="padding:8px 16px">Continuar igualmente</button></p>
+          </div>
+        </div>
+      </div>
+
+      <div id="footer">
+        <span><b>{{{ PRODUCT_NAME }}}</b> · v{{{ PRODUCT_VERSION }}}</span>
+        <span>Click para controlar la cámara · WASD moverse · Esc pausa</span>
+        <button id="fullscreen" type="button">Pantalla completa</button>
+      </div>
+    </div>
+
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      var loading = document.querySelector("#loading");
+      var banner = document.querySelector("#banner");
+      var statusLine = document.querySelector("#status");
+
+      // Avisos no bloqueantes (reemplazan al alert del template por defecto).
+      function showBanner(message, type) {
+        var div = document.createElement("div");
+        div.className = type === "error" ? "error" : "";
+        div.textContent = message;
+        banner.appendChild(div);
+        banner.style.display = "block";
+        if (type !== "error") {
+          setTimeout(function () {
+            banner.removeChild(div);
+            banner.style.display = banner.children.length ? "block" : "none";
+          }, 6000);
+        }
+      }
+
+      function friendlyError(message) {
+        var text = String(message);
+        if (/WebGL|context/i.test(text)) return "No se pudo iniciar WebGL. Probá actualizar el navegador o activar la aceleración por hardware.";
+        if (/memory|out of memory/i.test(text)) return "El navegador se quedó sin memoria. Cerrá otras pestañas y recargá la página.";
+        return "Ocurrió un error al ejecutar la demo. Recargá la página. Detalle: " + text.slice(0, 160);
+      }
+
+      var buildUrl = "Build";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_THREADS
+        workerUrl: buildUrl + "/{{{ WORKER_FILENAME }}}",
+#endif
+#if USE_WASM
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+        symbolsUrl: buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+        productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+        productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+        showBanner: function (msg, type) { showBanner(msg.replace(/<[^>]*>/g, ""), type); }
+      };
+
+      // El clic derecho (guardar dispositivo) y Tab (tablet) no deben abrir menús ni mover el foco del navegador.
+      canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+      window.addEventListener("keydown", function (e) {
+        if (["Tab", " ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "F3"].indexOf(e.key) >= 0 &&
+            (document.activeElement === canvas || document.pointerLockElement === canvas)) {
+          e.preventDefault();
+        }
+      });
+      // Dar foco al canvas con cualquier click para que el teclado llegue al juego.
+      canvas.addEventListener("mousedown", function () { canvas.focus(); });
+
+      // Aviso en dispositivos táctiles (la demo es para teclado y mouse).
+      var isTouch = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && !matchMedia("(pointer: fine)").matches);
+      if (isTouch) {
+        document.querySelector("#touch").classList.add("show");
+        document.querySelector("#touch-continue").onclick = function () {
+          document.querySelector("#touch").classList.remove("show");
+        };
+      }
+
+      var script = document.createElement("script");
+      script.src = buildUrl + "/{{{ LOADER_FILENAME }}}";
+      script.onload = function () {
+        createUnityInstance(canvas, config, function (progress) {
+          document.querySelector("#bar-fill").style.width = Math.round(100 * progress) + "%";
+          statusLine.textContent = progress < 0.9 ? "Descargando… " + Math.round(100 * progress) + "%" : "Preparando la sala…";
+        }).then(function (unityInstance) {
+          loading.style.display = "none";
+          canvas.focus();
+          document.querySelector("#fullscreen").onclick = function () { unityInstance.SetFullscreen(1); };
+        }).catch(function (message) {
+          statusLine.textContent = "";
+          showBanner(friendlyError(message), "error");
+        });
+      };
+      script.onerror = function () {
+        statusLine.textContent = "";
+        showBanner("No se pudo descargar el juego. Revisá tu conexión y recargá la página.", "error");
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>

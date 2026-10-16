@@ -17,6 +17,7 @@ Esta carpeta es la **fuente de verdad** del proyecto *Simulador LOTO* (bloqueo y
 | 9 | [WORKFLOW.md](WORKFLOW.md) | Git/LFS, uso de Unity MCP y Blender, build WebGL e itch.io. |
 | 10 | [ROADMAP.md](ROADMAP.md) | Hitos, tareas y estado. **Actualizar al terminar cada tarea.** |
 | 11 | [REFERENCES.md](REFERENCES.md) | Fuentes OSHA, videos, productos LOTO, referencias visuales. |
+| 12 | [PUBLISHING.md](PUBLISHING.md) | Cómo generar y publicar la build en itch.io; texto de la página; requisitos del navegador. |
 
 ## Reglas rápidas para agentes
 

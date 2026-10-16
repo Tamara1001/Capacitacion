@@ -20,12 +20,25 @@ namespace LotoSim.Core
             }
         }
 
+        private const string LowQualityKey = "loto.gfx.low";
+
+        /// <summary>Calidad gráfica baja (sin sombras ni post-procesado). Alta por defecto.</summary>
+        public static bool LowQuality
+        {
+            get => PlayerPrefs.GetInt(LowQualityKey, 0) == 1;
+            set
+            {
+                PlayerPrefs.SetInt(LowQualityKey, value ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+        }
+
         private const string InputDiagKey = "loto.debug.inputDiag";
 
-        /// <summary>Línea de diagnóstico de entrada en pantalla. Activa por defecto hasta cerrar los problemas de input.</summary>
+        /// <summary>Línea de diagnóstico de entrada en pantalla. Apagada por defecto; se activa desde Pausa o con F3.</summary>
         public static bool ShowInputDiagnostics
         {
-            get => PlayerPrefs.GetInt(InputDiagKey, 1) == 1;
+            get => PlayerPrefs.GetInt(InputDiagKey, 0) == 1;
             set
             {
                 PlayerPrefs.SetInt(InputDiagKey, value ? 1 : 0);

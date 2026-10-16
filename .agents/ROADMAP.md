@@ -55,15 +55,19 @@ Marcar `[x]` al completar. Cada hito termina con una build WebGL probada.
 - [x] SFX + ambiente + `SND_Library` + volumen maestro; [x] licencias registradas en ASSETS.md; [ ] mixer
 
 ## M4 — Pulido, rendimiento y entrega (días 10–12)
-- [ ] Perf en notebook con GPU integrada: ≥30 FPS, build < 50 MB, carga < 20 s
-- [ ] Evaluar excluir shaders de `com.unity.ai.inference` (Sentis) de la build: generan ~350 warnings y peso extra (verificar que no rompa AI Assistant/MCP)
-- [ ] WebGL template propio + página de itch (capturas, descripción): canvas responsive y capturar el error de pointer lock sin mostrar el banner de Unity
-- [ ] QA: recorrer ambos modos, todos los errores, reintentar, volver al menú
-- [ ] Revisión de textos (ortografía, tono)
-- [ ] Créditos
-- [ ] Build final publicada
+- [x] Build web liviana: **12 MB** (antes 13), 1 aviso (antes 354) tras quitar `com.unity.ai.inference` (Sentis, sin dependientes)
+- [x] Control de calidad **Alta/Baja** (sombras, post-procesado y FXAA) en Pausa y Opciones, con auto-detección de FPS bajos (< 24) en la build web
+- [ ] Medir en una notebook de oficina real (GPU integrada): ≥ 30 FPS, carga < 20 s. Sin hardware a mano no se pudo medir; el auto-ajuste cubre el caso
+- [x] Template WebGL propio (`Assets/WebGLTemplates/LotoSim`): responsive 16:9, pantalla de carga, errores sin `alert`, aviso en táctiles
+- [x] Zip para itch.io generado por `LotoSim ▸ Build ▸ WebGL` y guía en [PUBLISHING.md](PUBLISHING.md)
+- [ ] Subir la demo a itch.io (la hace la dueña del proyecto) y probar ya publicada
+- [x] QA automatizado: 16 Edit Mode + 8 Play Mode (recorrido completo sin errores = 100 pts, errores críticos, movimiento por teclas físicas, flechas y teclados de sólo texto)
+- [x] QA visual en 16:9, 16:10 y 4:3 (Chrome real); revisión de textos (tildes y voseo)
+- [x] Créditos (Barlow OFL, Kenney CC0)
+- [ ] Pasada final de calidad visual con la dueña del proyecto (ver backlog de arte abajo)
 
 ## Backlog v2+
+- Arte: iluminación horneada, atlas de paleta + `M_Palette`, `SM_Key`, kit de cañerías `SM_Pipe_*`, mixer de audio, íconos de UI.
 - Port VR: XR Interaction Toolkit + OpenXR, `XRInteractorAdapter`, tablet en muñeca, teleport.
 - Multímetro / detector de tensión en la verificación.
 - Pinza multi-candado (hasp) y caja de bloqueo grupal (varios trabajadores).
