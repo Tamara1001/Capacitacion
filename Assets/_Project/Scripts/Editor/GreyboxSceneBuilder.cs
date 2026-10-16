@@ -780,7 +780,7 @@ namespace LotoSim.Editor
             var prompt = Text("Text", promptRect, 26, TextAlignmentOptions.Top);
             var hintRect = Rect("Hint", canvas, Center, Center, new Vector2(0f, 90f), new Vector2(1200f, 60f));
             var hint = Text("Text", hintRect, 32, TextAlignmentOptions.Center,
-                "<mark=#1C1F24CC padding=\"24,24,10,10\">Hacé click para controlar la cámara\n<size=70%>WASD para moverte · F3 diagnóstico de entrada</size></mark>");
+                "<mark=#1C1F24CC padding=\"24,24,10,10\">Hacé click para controlar la cámara\n<size=70%>WASD para moverte · el diagnóstico de entrada está abajo a la izquierda</size></mark>");
 
             // Kit.
             var kitPanel = Panel("KitBar", canvas, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(1300f, 56f));
@@ -808,7 +808,7 @@ namespace LotoSim.Editor
             // Pausa + opciones.
             var pause = Panel("Pause", canvas, Center, Center, Vector2.zero, Vector2.zero, "#000000", 0.6f);
             StretchFull(pause.rectTransform);
-            var pauseBox = Panel("Box", pause.transform, Center, Center, Vector2.zero, new Vector2(560f, 560f));
+            var pauseBox = Panel("Box", pause.transform, Center, Center, Vector2.zero, new Vector2(560f, 660f));
             var pauseTitle = Text("Title", pauseBox.transform, 40, TextAlignmentOptions.Top, "<b>Pausa</b>");
             pauseTitle.margin = new Vector4(0f, 28f, 0f, 0f);
             var resume = Button("Resume", pauseBox.transform, new Vector2(0f, 150f), new Vector2(360f, 60f), "Continuar");
@@ -821,8 +821,9 @@ namespace LotoSim.Editor
             Text("VolumeLabel", Rect("VolumeLabelRect", pauseBox.transform, Center, Center, new Vector2(0f, -205f), new Vector2(360f, 30f)),
                 22, TextAlignmentOptions.Left, "Volumen");
             var volume = Slider("Volume", pauseBox.transform, new Vector2(0f, -240f), new Vector2(360f, 24f));
+            var diagToggle = Toggle("InputDiag", pauseBox.transform, new Vector2(20f, -295f), "Mostrar diagnóstico de entrada");
 
-            BuildInputDebug(canvas, player);
+            BuildInputDebug(canvas, player, diagToggle);
             BuildBriefing(canvas);
             BuildReport(canvas);
             BuildFade(canvas);
@@ -853,13 +854,25 @@ namespace LotoSim.Editor
             return canvas;
         }
 
-        private static void BuildInputDebug(Transform canvas, PlayerRefs player)
+        private static void BuildInputDebug(Transform canvas, PlayerRefs player, Toggle pauseToggle)
         {
-            var panel = Panel("InputDebug", canvas, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 96f), new Vector2(820f, 330f), "#0E1013", 0.88f);
-            var text = Text("Text", panel.transform, 20, TextAlignmentOptions.TopLeft);
-            text.margin = new Vector4(18f, 14f, 18f, 12f);
+            // Línea compacta siempre visible, abajo a la izquierda.
+            var compact = Panel("InputDebugCompact", canvas, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 96f), new Vector2(980f, 34f), "#0E1013", 0.78f);
+            var compactText = Text("Text", compact.transform, 19, TextAlignmentOptions.Left);
+            compactText.margin = new Vector4(14f, 0f, 14f, 0f);
+            compact.raycastTarget = false;
+
+            // Panel completo (F3, o automático si se aprietan teclas y no hay movimiento).
+            var full = Panel("InputDebugFull", canvas, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 96f), new Vector2(860f, 390f), "#0E1013", 0.9f);
+            var fullText = Text("Text", full.transform, 20, TextAlignmentOptions.TopLeft);
+            fullText.margin = new Vector4(18f, 14f, 18f, 12f);
+            full.raycastTarget = false;
+
             var overlay = canvas.gameObject.AddComponent<InputDebugOverlay>();
-            Set(overlay, ("_panel", panel.gameObject), ("_text", text), ("_motor", player.Motor));
+            Set(overlay,
+                ("_compactPanel", compact.gameObject), ("_compactText", compactText),
+                ("_fullPanel", full.gameObject), ("_fullText", fullText),
+                ("_motor", player.Motor), ("_pauseToggle", pauseToggle));
         }
 
         private static void BuildBriefing(Transform canvas)

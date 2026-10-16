@@ -20,6 +20,19 @@ namespace LotoSim.Core
             }
         }
 
+        private const string InputDiagKey = "loto.debug.inputDiag";
+
+        /// <summary>Línea de diagnóstico de entrada en pantalla. Activa por defecto hasta cerrar los problemas de input.</summary>
+        public static bool ShowInputDiagnostics
+        {
+            get => PlayerPrefs.GetInt(InputDiagKey, 1) == 1;
+            set
+            {
+                PlayerPrefs.SetInt(InputDiagKey, value ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+        }
+
         private const string VolumeKey = "loto.audio.master";
 
         public static float MasterVolume
