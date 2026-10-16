@@ -64,14 +64,14 @@ namespace LotoSim.UI
                 SetOpen(false);
                 return;
             }
-            if (_toggle.WasPressedThisFrame())
+            if (_toggle.WasPressedThisFrame() || TextKeyBridge.Typed('\t'))
                 SetOpen(!IsOpen);
             if (!IsOpen)
                 return;
 
             for (int i = 0; i < _slots.Length; i++)
             {
-                if (_slots[i].WasPressedThisFrame())
+                if (_slots[i].WasPressedThisFrame() || TextKeyBridge.Typed((char)('1' + i)))
                 {
                     _tab = i;
                     _nextRefresh = 0f;

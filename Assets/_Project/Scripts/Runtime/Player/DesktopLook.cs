@@ -59,7 +59,7 @@ namespace LotoSim.Player
         {
             bool locked = CursorControl.IsLocked;
 
-            if (_pause.WasPressedThisFrame())
+            if (_pause.WasPressedThisFrame() || TextKeyBridge.Typed((char)27) || TextKeyBridge.Typed('p'))
             {
                 if (DialogueSession.IsOpen)
                     DialogueSession.Close();

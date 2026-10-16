@@ -70,7 +70,8 @@ Objetivo: lógica de capacitación **desacoplada** del input y de la presentaci�
 - `GuidanceController` (sólo modo guiado): resalta los `HighlightIds` de las tareas pendientes (en pasos ordenados, sólo la siguiente) con pulso + marcador flotante; muestra fantasmas (`LotoSocket.ShowGhost`) donde se puede colocar el ítem en mano; convierte `MistakeMade` en avisos con explicación. En modo evaluación no muestra nada de esto.
 
 ### Player
-- `FirstPersonMotor` (CharacterController, WASD o flechas, Shift para caminar rápido, sin salto). Lee `Player/Move`; si llega en cero consulta `Keyboard.current` directamente (`UsedKeyboardFallback`).
+- `FirstPersonMotor` (CharacterController, WASD o flechas, Shift para caminar rápido, sin salto). Lee `Player/Move`; si llega en cero consulta `Keyboard.current` directamente (`UsedKeyboardFallback`) y, si tampoco hay teclas físicas, usa los caracteres tipeados (`UsedTextFallback`).
+- `TextKeyBridge` (Interaction): para teclados que sólo envían **texto** (teclado virtual, streaming desde el celular, escritorio remoto). Ignora el texto si hay una tecla física presionada; si no, w/a/s/d generan pulsos de movimiento y el resto de los caracteres alimentan los atajos (`Typed('t')`, dígitos de slots/diálogo, 'r', 'p', Tab, Esc). Los atajos nuevos deben usar `acción.WasPressedThisFrame() || TextKeyBridge.Typed(...)`.
 - `StationTeleport`: 5 estaciones (Locker, Estación LOTO, Tablero, Bomba, Operador); `T` abre el mapa y 1–5 saltan con fundido (`ScreenFade`). Mientras el mapa está abierto `OverlayMenu.IsOpen` bloquea el interactor.
 - `DesktopLook` + `CursorControl`: mouse look con pointer lock (WebGL requiere click para capturar el cursor). Si el navegador no permite el lock (iframes restringidos, vistas embebidas), pasa a un modo de respaldo: la cámara sigue al mouse sin capturarlo y se puede mover e interactuar igual.
 

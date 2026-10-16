@@ -61,6 +61,38 @@ namespace LotoSim.Tests
         }
 
         [UnityTest]
+        public IEnumerator TextOnlyKeyboard_TypedW_MovesPlayerAndTypedTOpensStationMap()
+        {
+            yield return SceneManager.LoadSceneAsync("PumpRoom");
+            yield return null;
+
+            GameFlow.SetState(GameState.Playing);
+            CursorControl.EnableFallback();
+            var motor = Object.FindFirstObjectByType<FirstPersonMotor>();
+            var stations = Object.FindFirstObjectByType<StationTeleport>();
+            var keyboard = Keyboard.current ?? InputSystem.AddDevice<Keyboard>();
+            InputSystem.EnableDevice(keyboard);
+            yield return null;
+
+            // Teclado virtual / streaming: llegan caracteres, ninguna tecla física pasa a "presionada".
+            var start = motor.transform.position;
+            float end = Time.time + 0.8f;
+            while (Time.time < end)
+            {
+                InputSystem.QueueTextEvent(keyboard, 'w');
+                yield return new WaitForSeconds(0.1f);
+            }
+            float moved = Vector3.Distance(start, motor.transform.position);
+            Assert.IsFalse(keyboard.wKey.isPressed, "El escenario no debe tener la tecla física presionada");
+            Assert.Greater(moved, 0.5f, $"Las 'w' tipeadas no movieron al jugador (distancia {moved:F3})");
+
+            InputSystem.QueueTextEvent(keyboard, 't');
+            yield return null;
+            yield return null;
+            Assert.IsTrue(stations.IsOpen, "La 't' tipeada debía abrir el mapa de estaciones");
+        }
+
+        [UnityTest]
         public IEnumerator MoveActionDisabled_ArrowKey_StillMovesViaKeyboardFallback()
         {
             yield return SceneManager.LoadSceneAsync("PumpRoom");

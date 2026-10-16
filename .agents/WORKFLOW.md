@@ -37,6 +37,11 @@
 - `LotoSim/Build/WebGL` (`BuildTool`) compila a `Builds/WebGL` y deja el resultado en `Logs/build-results.txt` (~3 min).
 - `PlayerSettings.runInBackground` está activado.
 
+### Si "WASD no responde"
+1. Mirar la línea **ENTRADA** (abajo a la izquierda; se apaga desde Pausa). Contadores *teclado / mouse / texto*, y el panel completo (F3, o se abre solo si se aprietan teclas sin avanzar) trae un veredicto en lenguaje llano.
+2. *texto* sube pero la W no se pone verde = teclado virtual/streaming: ya está cubierto por `TextKeyBridge` (pasos cortos, no se puede mantener la tecla).
+3. Todos los contadores en 0 = el teclado no llega a la ventana del juego (foco).
+
 ### Probar la build WebGL con un Chrome real (CDP)
 - Servir `Builds/WebGL` con `python -I -m http.server <puerto> --bind 127.0.0.1` y abrir Chrome con `--remote-debugging-port` y un `--user-data-dir` temporal; **no matar procesos `chrome` a ciegas** (cierra también el Chrome del usuario: filtrar por la línea de comando).
 - Para teclado/mouse de confianza usar `Input.dispatchMouseEvent` / `Input.dispatchKeyEvent` por CDP, con `Emulation.setFocusEmulationEnabled` y `Page.bringToFront`; sin foco emulado la pestaña se congela al recibir teclas.

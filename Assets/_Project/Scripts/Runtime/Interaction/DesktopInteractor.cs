@@ -89,7 +89,7 @@ namespace LotoSim.Interaction
         {
             for (int i = 0; i < _slots.Length; i++)
             {
-                if (_slots[i].WasPressedThisFrame())
+                if (_slots[i].WasPressedThisFrame() || TextKeyBridge.Typed((char)('1' + i)))
                     DialogueSession.Choose(i);
             }
         }
@@ -98,10 +98,10 @@ namespace LotoSim.Interaction
         {
             if (_kit == null)
                 return;
-            if (_slots[0].WasPressedThisFrame()) _kit.Select(LotoItemType.Padlock);
-            if (_slots[1].WasPressedThisFrame()) _kit.Select(LotoItemType.Tag);
-            if (_slots[2].WasPressedThisFrame()) _kit.Select(LotoItemType.ValveLockout);
-            if (_stow.WasPressedThisFrame()) _kit.ClearSelection();
+            if (_slots[0].WasPressedThisFrame() || TextKeyBridge.Typed('1')) _kit.Select(LotoItemType.Padlock);
+            if (_slots[1].WasPressedThisFrame() || TextKeyBridge.Typed('2')) _kit.Select(LotoItemType.Tag);
+            if (_slots[2].WasPressedThisFrame() || TextKeyBridge.Typed('3')) _kit.Select(LotoItemType.ValveLockout);
+            if (_stow.WasPressedThisFrame() || TextKeyBridge.Typed('r')) _kit.ClearSelection();
 
             float scroll = _cycle.ReadValue<float>();
             if (Mathf.Abs(scroll) > 0.01f && _cycle.WasPressedThisFrame())

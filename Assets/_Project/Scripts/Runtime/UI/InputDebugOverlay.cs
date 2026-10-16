@@ -252,7 +252,8 @@ namespace LotoSim.UI
             if (_motor != null)
             {
                 _builder.Append($"Motor: puede moverse = {_motor.CanMove}   entrada aplicada = {_motor.LastInput.ToString("F2")}");
-                _builder.Append(_motor.UsedKeyboardFallback ? "   (vía teclado directo)\n" : "\n");
+                _builder.Append(_motor.UsedKeyboardFallback ? "   (vía teclado directo)" : _motor.UsedTextFallback ? "   (vía texto: teclado virtual)" : "");
+                _builder.Append('\n');
                 _builder.Append($"Posición: {_motor.transform.position.ToString("F2")}\n");
             }
             _builder.Append($"Eventos recibidos: teclado {_keyboardEvents} (último hace {Ago(_lastKeyboardTime)})   mouse {_mouseEvents}   texto {_textEvents} (último '{(_textEvents > 0 ? _lastChar.ToString() : "-")}' hace {Ago(_lastTextTime)})\n");
@@ -279,7 +280,7 @@ namespace LotoSim.UI
                 if (_keyboardEvents == 0 && _textEvents == 0)
                     return "no llega NINGÚN evento de teclado al juego (ni teclas ni texto): el teclado no está llegando a esta ventana.";
                 if (_textEvents > 0 && _keyboardEvents == 0)
-                    return "llega texto pero no teclas físicas: el teclado envía caracteres (teclado virtual / streaming), no se puede mantener W.";
+                    return "llega texto pero no teclas físicas (teclado virtual / streaming): se mueve con pasos cortos por cada w/a/s/d tipeada.";
                 return "llegan eventos de teclado, pero no WASD/flechas: probá apretar W mantenida y mirá si se pone en verde.";
             }
             if (_motor != null && _motor.LastInput.sqrMagnitude < 0.0001f)

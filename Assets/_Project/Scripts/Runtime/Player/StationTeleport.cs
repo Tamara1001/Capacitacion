@@ -50,7 +50,7 @@ namespace LotoSim.Player
                 SetOpen(false);
                 return;
             }
-            if (_toggle.WasPressedThisFrame())
+            if (_toggle.WasPressedThisFrame() || TextKeyBridge.Typed('t'))
             {
                 SetOpen(!IsOpen);
                 return;
@@ -59,7 +59,7 @@ namespace LotoSim.Player
                 return;
             for (int i = 0; i < _slots.Length && i < _stations.Count; i++)
             {
-                if (_slots[i].WasPressedThisFrame())
+                if (_slots[i].WasPressedThisFrame() || TextKeyBridge.Typed((char)('1' + i)))
                 {
                     GoTo(_stations[i]);
                     return;

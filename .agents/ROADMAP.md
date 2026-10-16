@@ -44,7 +44,7 @@ Marcar `[x]` al completar. Cada hito termina con una build WebGL probada.
 - [ ] Subir a itch.io (privada) — requiere cuenta/butler de la dueña del proyecto
 
 ## M3 — Arte y audio v1 (días 7–9)
-- [x] **Bug WASD**: no se pudo reproducir (funciona en el Editor y en Chrome con teclado real). Se endureció igual: el movimiento cae al teclado directo (WASD/flechas) si la acción `Move` llega en cero, el Editor enruta el teclado al juego aunque la Game view no tenga foco (`LotoSim.inputsettings`) y F3 muestra un overlay de diagnóstico. Si el usuario lo sigue viendo, pedir una captura del F3.
+- [x] **Bug WASD — causa encontrada**: el usuario juega por streaming desde el celular y el teclado virtual manda *caracteres* (eventos de texto), no teclas físicas: el Input System nunca ve la W "presionada". `TextKeyBridge` convierte w/a/s/d tipeadas en pasos cortos (0,4 s) y 1-5/t/r/p/Tab/Esc en atajos. Antes de dar con esto: no se podía reproducir con teclado real (funciona en el Editor y en Chrome). Se endureció igual: el movimiento cae al teclado directo (WASD/flechas) si la acción `Move` llega en cero, el Editor enruta el teclado al juego aunque la Game view no tenga foco (`LotoSim.inputsettings`) y F3 muestra un overlay de diagnóstico. Si el usuario lo sigue viendo, pedir una captura del F3.
 - [ ] Atlas de paleta + material `M_Palette` (hoy: materiales planos `M_GB_*`); [x] shader de outline (`LotoSim/Outline`, hover blanco + objetivo ámbar); ghost sigue como material transparente
 - [x] Modelos Blender prioridad A (bomba, válvulas, manómetro, seccionador, botonera, candado, etiqueta, bloqueo) — falta `SM_Key`
 - [ ] Modelos prioridad B: [x] estación LOTO, locker + EPP, tablero; falta kit de cañerías (`SM_Pipe_*`) y `SM_ElectricalPanel` como modelo propio

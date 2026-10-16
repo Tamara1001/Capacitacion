@@ -34,6 +34,9 @@ namespace LotoSim.Player
         /// <summary>True si el último movimiento vino del teclado directo y no de la acción.</summary>
         public bool UsedKeyboardFallback { get; private set; }
 
+        /// <summary>True si el movimiento vino de caracteres de texto (teclado virtual / streaming).</summary>
+        public bool UsedTextFallback { get; private set; }
+
         public bool CanMove =>
             GameFlow.State == GameState.Playing && !DialogueSession.IsOpen && CursorControl.HasControl;
 
@@ -62,18 +65,30 @@ namespace LotoSim.Player
         {
             var fromAction = _move.ReadValue<Vector2>();
             UsedKeyboardFallback = false;
+            UsedTextFallback = false;
             if (fromAction.sqrMagnitude > 0.0001f)
                 return fromAction;
 
             var keyboard = Keyboard.current;
             if (keyboard == null)
-                return Vector2.zero;
+                return TextPulse();
 
             var raw = new Vector2(
                 Axis(keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed, keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed),
                 Axis(keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed, keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed));
             UsedKeyboardFallback = raw.sqrMagnitude > 0f;
+            if (!UsedKeyboardFallback)
+                return TextPulse();
             return raw.sqrMagnitude > 1f ? raw.normalized : raw;
+        }
+
+        /// <summary>Teclados que sólo mandan caracteres: cada w/a/s/d es un paso corto.</summary>
+        private Vector2 TextPulse()
+        {
+            if (!TextKeyBridge.TryGetMove(out var direction))
+                return Vector2.zero;
+            UsedTextFallback = true;
+            return direction;
         }
 
         private static float Axis(bool positive, bool negative) => (positive ? 1f : 0f) - (negative ? 1f : 0f);
