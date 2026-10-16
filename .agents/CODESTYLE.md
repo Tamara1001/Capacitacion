@@ -7,7 +7,7 @@
 
 ## C#
 - Namespace por módulo: `LotoSim.Core`, `LotoSim.Interaction`, `LotoSim.Devices`, `LotoSim.Procedure`, `LotoSim.Evaluation`, `LotoSim.Guidance`, `LotoSim.Player`, `LotoSim.UI`, `LotoSim.Audio`.
-- **Una clase pública por archivo**, nombre de archivo = nombre de clase.
+- **Una clase pública por archivo**, nombre de archivo = nombre de clase. Excepción: los structs de eventos y los enums chicos de un módulo van juntos (`DeviceEvents.cs`, `SimEnums.cs`).
 - Naming:
   - `PascalCase`: tipos, métodos, propiedades, eventos, constantes.
   - `_camelCase`: campos privados. `camelCase`: parámetros y locales.

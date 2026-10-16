@@ -38,23 +38,25 @@ Objetivo: lógica de capacitación **desacoplada** del input y de la presentaci�
 - `IInteractor`: quién interactúa. Expone `HeldItem`, `Hover`, eventos. Implementaciones: `DesktopInteractor` (raycast desde el centro de la cámara) ahora; `XRInteractorAdapter` (XR Interaction Toolkit) en v2.
 - `IInteractable`: `CanInteract(IInteractor)`, `Interact(IInteractor)`, `GetPrompt()` → texto "Click: Cerrar válvula".
 - `IHoverable`: para outline y prompt.
-- `Pickable`: objeto que se puede tomar (candado, etiqueta, herramienta). En desktop va a `HandSlot`; en VR lo agarra la mano.
-- `LotoSocket`: punto donde se coloca un dispositivo (acepta `ItemType`s, orden de apilado: bloqueo de válvula → candado → etiqueta). Muestra contorno fantasma en modo guiado.
-- `LotoKit`: inventario de dispositivos LOTO (slots 1–4) + llave. Desktop: barra inferior; VR: cinturón/caja.
+- `SignalInteractable`: interacción configurable que levanta un *flag* y/o emite una *signal* y muestra un aviso (EPP, rótulos de identificación, herramientas).
+- `LotoKit`: inventario de dispositivos LOTO (candado, etiqueta, bloqueo de válvula) + ítem seleccionado ("en mano") + llave. Desktop: barra inferior y teclas 1–3; VR: cinturón/caja.
+- `LotoStation`: entrega el kit y lo recibe al final (sólo con todos los dispositivos de vuelta y tras el mantenimiento).
+- `DialogueDefinition` (SO) + `DialogueSession` + `DialogueSource`: el operador y la orden de trabajo abren diálogos según el paso actual (provisto por `DialogueSource.CurrentStepIdProvider`, para que Interaction no dependa de Procedure).
 - **Regla:** ningún Device ni el Procedure lee `Mouse`/`Keyboard`. Sólo los `Desktop*` lo hacen, vía Input System actions.
 
 ### Devices (mundo)
 - `Device` (base): `DeviceId` (ej. `DS-101`), estado, publica `DeviceStateChanged`.
-- `DisconnectSwitch` (ON/OFF, bloqueable), `LeverValve` (abierta/cerrada, animación de palanca 90°), `BleedValve` (abierta/cerrada), `PressureGauge` (lee `PumpSystem`), `ControlStation` (START/STOP), `PumpSystem` (simula: energizado, en marcha, presión, flujo).
-- `IsolationPoint`: une un `Device` con sus `LotoSocket`s; expone `IsIsolated`, `IsLocked`, `IsTagged`.
-- `PumpSystem` es la única "física" del sistema: calcula `IsRunning = energized && startPressed && !locked`, presión según válvulas y purga. Determinístico, sin Rigidbody.
+- `ToggleDevice` → `DisconnectSwitch` (ON/OFF) y `Valve` (abierta/cerrada; succión, descarga y purga usan la misma clase). `PressureGauge` (lee `PumpSystem`), `ControlStation` + `ControlButton` (START/STOP), `PumpCasing` (dispara el mantenimiento).
+- `LotoSocket` (en el mismo GameObject del `Device`): apila bloqueo de válvula → candado → etiqueta; se retiran en orden inverso y el candado requiere la llave. El `Device` decide con un solo click si **coloca** (hay ítem en mano y se puede), **retira** (mano vacía y hay dispositivos) u **opera**.
+- `PumpModel` (C# puro, testeado) + `PumpSystem` (MonoBehaviour): energizado = DS-101 en ON; en marcha = energizado y orden de marcha; 4 bar en marcha, 2.5 bar de línea con alguna válvula abierta, presión atrapada con ambas cerradas hasta purgar. Recalcula en `LateUpdate` para que los handlers vean el estado previo a la acción.
 
 ### Procedure
 - `ProcedureDefinition` (SO): lista ordenada de `StepDefinition`.
 - `StepDefinition` (SO): id (`S0`…`S7`), título, descripción (guiado), lista de `TaskDefinition`.
-- `TaskDefinition` (SO): id, texto, `Condition` a cumplir (ej. `DeviceStateCondition{DS-101 = Off}`, `ItemPlacedCondition{socket, itemType}`, `DialogueChoiceCondition`), objetivos a resaltar (por `DeviceId`).
-- `HazardRule` (SO): condición de peligro + severidad + mensaje (ej. "purga abierta con V-101 abierta").
-- `ProcedureRunner`: escucha `SimEvents`, evalúa tareas del paso actual y reglas de peligro, avanza pasos, publica `TaskCompleted`, `StepStarted`, `MistakeMade`.
+- `TaskDefinition` (clase serializable **dentro** del `StepDefinition`, no un asset aparte): id, texto, lista de `TaskCondition` (todas deben cumplirse) e ids a resaltar. `StepDefinition.Ordered` obliga a completar las tareas en orden.
+- `TaskCondition` (struct plano editable en el Inspector): `DeviceState`, `SocketHas`, `SocketEmpty`, `PumpRunning/Stopped/Depressurized`, `Flag` (hito persistente, `Signals.RaiseFlag`) y `Signal` (acción momentánea, `Signals.Emit`: sólo cuenta durante el paso en curso y, en pasos ordenados, después de la tarea anterior).
+- `ProcedureProgress` (C# puro, testeado contra un `IWorldState` falso) + `ProcedureRunner` (MonoBehaviour que implementa `IWorldState` y publica `StepStarted`, `TaskCompleted`, `ProcedureCompleted`).
+- `HazardRule` (SO, **M2**): condición de peligro + severidad + mensaje (ej. "purga abierta con V-101 abierta").
 - Las condiciones referencian dispositivos por **`DeviceId` string**, no por referencia de escena (los SO no pueden apuntar a objetos de escena). `DeviceRegistry` resuelve el id.
 
 ### Evaluation
@@ -67,7 +69,7 @@ Objetivo: lógica de capacitación **desacoplada** del input y de la presentaci�
 ### Player
 - `FirstPersonMotor` (CharacterController, WASD, Shift para caminar rápido, sin salto).
 - `StationTeleport`: lista de `StationPoint` (Locker, Estación LOTO, Tablero, Bomba, Operador); menú `T` para saltar con fade.
-- `DesktopLook`: mouse look con pointer lock (WebGL requiere click para capturar el cursor).
+- `DesktopLook` + `CursorControl`: mouse look con pointer lock (WebGL requiere click para capturar el cursor). Si el navegador no permite el lock (iframes restringidos, vistas embebidas), pasa a un modo de respaldo: la cámara sigue al mouse sin capturarlo y se puede mover e interactuar igual.
 
 ### UI
 - `TabletView` (world-space uGUI, sostenida/abierta con `Tab`): checklist de pasos, tarjeta de LOTO, OT.
@@ -90,6 +92,10 @@ Objetivo: lógica de capacitación **desacoplada** del input y de la presentaci�
 - `StationTeleport` → teleport anchors de XRI; `FirstPersonMotor` → continuous move provider.
 - El Procedure, Devices, Evaluation y Guidance **no cambian**.
 
+## Construcción de contenido por código
+- `LotoSim/Datos/Regenerar procedimiento P-101` (`ProcedureDataBuilder`): genera pasos y diálogos desde el guion. Editar ahí y regenerar, o ajustar los assets a mano.
+- `LotoSim/Greybox/Construir PumpRoom` (`GreyboxSceneBuilder`): reconstruye la escena completa (sala, equipos, jugador, HUD) de forma idempotente. Cuando lleguen los modelos de Blender se reemplazan los hijos visuales y se mantienen los componentes.
+
 ## Testing
 - Edit Mode tests (Unity Test Framework) para `ProcedureRunner`, condiciones, `HazardRule`s y `AssessmentTracker` usando un `PumpSystem` falso.
-- Play Mode smoke test: recorrer el procedimiento completo invocando `Interact()` por código.
+- Play Mode: `ProcedureWalkthroughTests` recorre los 8 pasos invocando `Interact()` sobre los objetos reales de la escena (valida escena + datos + lógica).

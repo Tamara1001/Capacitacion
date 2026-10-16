@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e770c70b6dcec4292667b020d3dcb2, type: 3}
+  m_Name: STEP_S5_Stored
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Procedure.StepDefinition
+  _id: S5
+  _title: "Controlar la energ\xEDa almacenada"
+  _description: "Qued\xF3 presi\xF3n atrapada en la carcasa. Abr\xED la purga V-103
+    y esper\xE1 a que el man\xF3metro marque 0 bar."
+  _ordered: 1
+  _tasks:
+  - _id: S5.bleed
+    _description: Abrir la purga V-103
+    _conditions:
+    - _kind: 0
+      _target: V-103
+      _state: 3
+      _item: 0
+    _highlightIds:
+    - V-103
+  - _id: S5.zero
+    _description: "Esperar a que la presi\xF3n llegue a 0 bar"
+    _conditions:
+    - _kind: 5
+      _target: 
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - PI-101

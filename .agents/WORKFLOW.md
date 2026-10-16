@@ -29,6 +29,11 @@
 - Para cambios masivos de escena, usar un script de editor (`LotoSim.Editor`) idempotente en vez de decenas de llamadas sueltas.
 - Capturas de verificación: Game View a 1280×720.
 
+### Verificación en Play Mode por MCP
+- Sin foco, Unity no avanza el loop de juego: usar `editor_focus` antes de capturar la Game View (roba el foco: avisar).
+- Los clicks/teclas simulados no llegan si la Game View no tiene foco (`editorInputBehaviorInPlayMode` respeta el foco). Para lógica, preferir los Play Mode tests; el input real se prueba en la build WebGL.
+- `PlayerSettings.runInBackground` está activado.
+
 ## Blender
 - Fuentes en `Blender/`, scripts en `Blender/scripts/`. Ejecutar headless:
   `"<BLENDER_EXE>" -b -P Blender/scripts/build_<asset>.py -- --out Assets/_Project/Art/Models/SM_<Asset>.fbx`

@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e770c70b6dcec4292667b020d3dcb2, type: 3}
+  m_Name: STEP_S7_Restore
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Procedure.StepDefinition
+  _id: S7
+  _title: Finalizar y restablecer
+  _description: "Dej\xE1 el \xE1rea en orden, avis\xE1 al operador, retir\xE1 tus
+    bloqueos y restablec\xE9 la bomba de forma controlada."
+  _ordered: 1
+  _tasks:
+  - _id: S7.tools
+    _description: "Recoger las herramientas del \xE1rea"
+    _conditions:
+    - _kind: 6
+      _target: tool.wrench
+      _state: 0
+      _item: 0
+    - _kind: 6
+      _target: tool.screwdriver
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - TOOLS
+  - _id: S7.bleed
+    _description: Cerrar la purga V-103
+    _conditions:
+    - _kind: 0
+      _target: V-103
+      _state: 2
+      _item: 0
+    _highlightIds:
+    - V-103
+  - _id: S7.notify
+    _description: Avisar al operador que se restablece el equipo
+    _conditions:
+    - _kind: 6
+      _target: notify.restore
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - OPERATOR
+  - _id: S7.remove
+    _description: Retirar etiquetas, candados y bloqueos
+    _conditions:
+    - _kind: 2
+      _target: DS-101
+      _state: 0
+      _item: 0
+    - _kind: 2
+      _target: V-101
+      _state: 0
+      _item: 0
+    - _kind: 2
+      _target: V-102
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - DS-101
+  - _id: S7.kit
+    _description: "Devolver el kit a la estaci\xF3n LOTO"
+    _conditions:
+    - _kind: 6
+      _target: kit.returned
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - LOTO-STATION
+  - _id: S7.v101
+    _description: "Abrir la v\xE1lvula de succi\xF3n V-101"
+    _conditions:
+    - _kind: 0
+      _target: V-101
+      _state: 3
+      _item: 0
+    _highlightIds:
+    - V-101
+  - _id: S7.v102
+    _description: "Abrir la v\xE1lvula de descarga V-102"
+    _conditions:
+    - _kind: 0
+      _target: V-102
+      _state: 3
+      _item: 0
+    _highlightIds:
+    - V-102
+  - _id: S7.ds101
+    _description: Subir el seccionador DS-101 a ON
+    _conditions:
+    - _kind: 0
+      _target: DS-101
+      _state: 1
+      _item: 0
+    _highlightIds:
+    - DS-101
+  - _id: S7.start
+    _description: Arrancar la bomba con START
+    _conditions:
+    - _kind: 3
+      _target: 
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - CS-101

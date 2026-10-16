@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ad22f0b44546e444901edfb3d2c82f7, type: 3}
+  m_Name: PROC_LOTO_P101
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Procedure.ProcedureDefinition
+  _title: "LOTO \u2014 Bomba centr\xEDfuga P-101"
+  _steps:
+  - {fileID: 11400000, guid: 0c1cc09e97ded1d45805fc42787d2e9f, type: 2}
+  - {fileID: 11400000, guid: d16b1ccdeddda6d41943419f8bb82754, type: 2}
+  - {fileID: 11400000, guid: 217a08c15a8a39347a62307ea17790a7, type: 2}
+  - {fileID: 11400000, guid: d58493eb3ec94ab45a816794592a9eeb, type: 2}
+  - {fileID: 11400000, guid: bb1e8ae2d8f126d43b25f4e52096cb15, type: 2}
+  - {fileID: 11400000, guid: 81d9906cdea4fbd4aac05f51acd67e67, type: 2}
+  - {fileID: 11400000, guid: 075bb3f9839f5364a8a1d59eaeccebb1, type: 2}
+  - {fileID: 11400000, guid: e3ce21f636fe3a84c84e24036aad857f, type: 2}

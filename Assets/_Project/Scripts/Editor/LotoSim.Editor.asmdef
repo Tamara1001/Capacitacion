@@ -3,7 +3,9 @@
     "rootNamespace": "LotoSim.Editor",
     "references": [
         "LotoSim.Runtime",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"

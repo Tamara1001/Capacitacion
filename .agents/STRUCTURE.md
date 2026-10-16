@@ -7,6 +7,7 @@ Capacitacion/
 ├─ Assets/
 │  ├─ _Project/             TODO lo propio va acá
 │  ├─ Settings/             URP assets y Volume profiles (de la plantilla; se dejan en su lugar)
+│  ├─ TextMesh Pro/         TMP Essential Resources (ubicación que espera TMP)
 │  └─ ThirdParty/           Assets externos sin modificar (Kenney, fuentes, etc.)
 ├─ Blender/                 Fuentes .blend y scripts de generación (LFS) — fuera de Assets
 │  ├─ scripts/              *.py ejecutables con `blender -b -P`
@@ -22,7 +23,7 @@ Capacitacion/
 _Project/
 ├─ Art/
 │  ├─ Models/        FBX exportados desde Blender (SM_*.fbx)
-│  ├─ Materials/     M_*.mat
+│  ├─ Materials/     M_*.mat (Greybox/M_GB_*.mat los genera el builder)
 │  ├─ Textures/      T_*.png (incluye T_PaletteAtlas)
 │  └─ Shaders/       Shader Graphs (outline, ghost, highlight pulse)
 ├─ Audio/
@@ -32,9 +33,8 @@ _Project/
 ├─ Data/
 │  ├─ Procedures/    PROC_LOTO_P101.asset
 │  ├─ Steps/         STEP_S0_EPP.asset … STEP_S7_Restore.asset
-│  ├─ Tasks/         TASK_S3_CloseV102.asset …
+│  ├─ Dialogues/     DLG_WorkOrder, DLG_NotifyStop, DLG_NotifyRestore, DLG_OperatorIdle
 │  ├─ Hazards/       HZ_BleedBeforeIsolate.asset …
-│  └─ Items/         ITEM_Padlock.asset, ITEM_Tag.asset …
 ├─ Input/            LotoSim.inputactions (asignado como acciones project-wide)
 ├─ Prefabs/
 │  ├─ Devices/       PF_DisconnectSwitch, PF_LeverValve, PF_BleedValve, PF_Gauge, PF_ControlStation

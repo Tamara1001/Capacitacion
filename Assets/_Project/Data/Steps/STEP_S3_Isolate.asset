@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e770c70b6dcec4292667b020d3dcb2, type: 3}
+  m_Name: STEP_S3_Isolate
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Procedure.StepDefinition
+  _id: S3
+  _title: "Aislar las fuentes de energ\xEDa"
+  _description: "Baj\xE1 el seccionador a OFF y cerr\xE1 las v\xE1lvulas: primero
+    la descarga, despu\xE9s la succi\xF3n."
+  _ordered: 0
+  _tasks:
+  - _id: S3.ds101
+    _description: Bajar el seccionador DS-101 a OFF
+    _conditions:
+    - _kind: 0
+      _target: DS-101
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - DS-101
+  - _id: S3.v102
+    _description: "Cerrar la v\xE1lvula de descarga V-102"
+    _conditions:
+    - _kind: 0
+      _target: V-102
+      _state: 2
+      _item: 0
+    _highlightIds:
+    - V-102
+  - _id: S3.v101
+    _description: "Cerrar la v\xE1lvula de succi\xF3n V-101"
+    _conditions:
+    - _kind: 0
+      _target: V-101
+      _state: 2
+      _item: 0
+    _highlightIds:
+    - V-101

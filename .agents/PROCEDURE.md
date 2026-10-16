@@ -63,7 +63,7 @@ Kit LOTO (estación de bloqueo en la pared): 3 candados rojos personales (misma 
 - **Acción 1 (try-out):** presionar **START** en CS-101 → no pasa nada (luz roja, clic seco) → aviso "Aislamiento verificado".
 - **Acción 2:** **volver STOP** (dejar el mando en posición de parada).
 - **Acción 3:** confirmar en la tablet que el manómetro marca 0.
-- **Transición:** fade a negro "Se realizó el cambio de sello mecánico" (el mantenimiento no se juega en v1). El equipo vuelve con la carcasa cerrada y 2 herramientas olvidadas en el piso.
+- **Acción 4:** interactuar con la carcasa de la bomba: "Realizar el cambio de sello mecánico" (el mantenimiento no se juega en v1; en M2 se agrega un fade). Aparecen 2 herramientas olvidadas en el piso.
 - **Error (crítico):** si el usuario intenta "Iniciar mantenimiento" (interacción en la carcasa) antes del try-out.
 
 ## Paso 7 — Finalizar y restablecer

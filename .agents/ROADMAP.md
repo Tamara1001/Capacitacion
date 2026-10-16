@@ -16,29 +16,30 @@ Marcar `[x]` al completar. Cada hito termina con una build WebGL probada.
 - [x] Build WebGL vacía de prueba (11 MB, OK)
 
 ## M1 — Greybox jugable (días 2–4) ⭐ prioridad
-- [ ] Sala greybox con primitivas (paredes, bomba, tablero, botonera, estación LOTO, locker, operador)
-- [ ] `FirstPersonMotor` + `DesktopLook` con pointer lock + pausa al perder foco
-- [ ] Núcleo: `SimEvents`, `Services`, `GameFlow`, `SessionContext`
-- [ ] Interacción: `IInteractor`, `DesktopInteractor`, `IInteractable`, prompt HUD, rango "Acercate"
-- [ ] Devices: `PumpSystem`, `DisconnectSwitch`, `LeverValve`, `BleedValve`, `PressureGauge`, `ControlStation`, `DeviceRegistry`
-- [ ] LOTO: `Pickable`, `LotoKit` (slots + llave), `LotoSocket` (apilado bloqueo→candado→etiqueta), `IsolationPoint`
-- [ ] Procedure: SOs `ProcedureDefinition`/`StepDefinition`/`TaskDefinition`/condiciones + `ProcedureRunner`
-- [ ] Datos: `PROC_LOTO_P101` con los 8 pasos de PROCEDURE.md
-- [ ] HUD texto plano: paso actual, tareas, kit
-- [ ] Edit Mode tests del runner y del `PumpSystem`
-- [ ] Recorrido completo jugable de punta a punta (modo guiado sin resaltados aún)
+- [x] Sala greybox con primitivas (paredes, bomba, tablero, botonera, estación LOTO, locker, operador)
+- [x] `FirstPersonMotor` + `DesktopLook` con pointer lock + pausa al perder foco
+- [x] Núcleo: `SimEvents`, `Services`, `GameFlow`, `SessionContext`
+- [x] Interacción: `IInteractor`, `DesktopInteractor`, `IInteractable`, prompt HUD, rango "Acercate"
+- [x] Devices: `PumpSystem` (+`PumpModel` puro), `DisconnectSwitch`, `Valve` (succión, descarga y purga), `PressureGauge`, `ControlStation`/`ControlButton`, `PumpCasing`, `DeviceRegistry`
+- [x] LOTO: `LotoKit` (slots + llave), `LotoSocket` (apilado bloqueo→candado→etiqueta), `LotoStation`; EPP, rótulos y herramientas con `SignalInteractable`; operador y OT con `DialogueSource`
+- [x] Procedure: SOs `ProcedureDefinition`/`StepDefinition`/`TaskDefinition`/condiciones + `ProcedureRunner`
+- [x] Datos: `PROC_LOTO_P101` con los 8 pasos de PROCEDURE.md
+- [x] HUD texto plano: paso actual, tareas, kit
+- [x] Edit Mode tests del runner y del `PumpSystem`
+- [x] Recorrido completo jugable de punta a punta (modo guiado sin resaltados aún)
 
 ## M2 — Loop completo de capacitación (días 5–6)
 - [ ] `HazardRule`s y `AssessmentTracker` (severidades, puntaje, orden, tiempo)
 - [ ] `GuidanceController`: outline, marcadores, ghosts, toasts de error
 - [ ] Modo Evaluación (sin guía)
-- [ ] EPP: locker con distractores
-- [ ] Operador NPC + radio + `DialogueView` con 3 opciones
-- [ ] Try-out y transición "mantenimiento realizado" (fade + herramientas en el piso)
-- [ ] Paso 7 completo (retiro de bloqueos con llave, restablecer, arranque)
-- [ ] Menú, Briefing, Pausa/Opciones, Reporte (funcionales, estilo básico)
+- [x] EPP: locker con distractores (lógica; feedback de error fino en M2)
+- [x] Operador NPC + diálogo con 3 opciones (radio pendiente)
+- [x] Try-out y "mantenimiento realizado" con herramientas en el piso (falta el fade)
+- [x] Paso 7 completo (retiro de bloqueos con llave, restablecer, arranque)
+- [ ] Menú, Briefing, Opciones, Reporte (funcionales, estilo básico) — pausa y pantalla de fin básicas ya existen
+- [ ] Volver a poner `Menu` como escena 0 del build (en M1 `PumpRoom` es la 0 para probar directo)
 - [ ] `StationTeleport` (T) con fade
-- [ ] Play Mode smoke test del procedimiento completo
+- [x] Play Mode smoke test del procedimiento completo
 - [ ] Build WebGL M2 en itch (privada)
 
 ## M3 — Arte y audio v1 (días 7–9)
@@ -48,13 +49,13 @@ Marcar `[x]` al completar. Cada hito termina con una build WebGL probada.
 - [ ] Sala modular, ambientación y señalética; NPC CC0
 - [ ] Iluminación horneada + post-procesado leve
 - [ ] Tablet diegética (pestañas Pasos / Tarjeta LOTO / OT)
-- [ ] UI estilizada (Inter, paneles, íconos) según DESIGN.md
+- [ ] UI estilizada (Inter, paneles, íconos) según DESIGN.md; evitar que el toast se superponga al panel de pasos en 16:10
 - [ ] SFX + ambiente + mixer; registrar licencias en ASSETS.md
 
 ## M4 — Pulido, rendimiento y entrega (días 10–12)
 - [ ] Perf en notebook con GPU integrada: ≥30 FPS, build < 50 MB, carga < 20 s
 - [ ] Evaluar excluir shaders de `com.unity.ai.inference` (Sentis) de la build: generan ~350 warnings y peso extra (verificar que no rompa AI Assistant/MCP)
-- [ ] WebGL template propio + página de itch (capturas, descripción)
+- [ ] WebGL template propio + página de itch (capturas, descripción): canvas responsive y capturar el error de pointer lock sin mostrar el banner de Unity
 - [ ] QA: recorrer ambos modos, todos los errores, reintentar, volver al menú
 - [ ] Revisión de textos (ortografía, tono)
 - [ ] Créditos

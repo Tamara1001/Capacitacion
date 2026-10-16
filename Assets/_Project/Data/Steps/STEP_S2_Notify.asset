@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e770c70b6dcec4292667b020d3dcb2, type: 3}
+  m_Name: STEP_S2_Notify
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Procedure.StepDefinition
+  _id: S2
+  _title: Comunicar y detener
+  _description: "Avis\xE1 al operador que la bomba quedar\xE1 fuera de servicio y
+    detenela con su mando normal (STOP)."
+  _ordered: 1
+  _tasks:
+  - _id: S2.notify
+    _description: Notificar al operador
+    _conditions:
+    - _kind: 6
+      _target: notify.stop
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - OPERATOR
+  - _id: S2.stop
+    _description: Detener la bomba con STOP en la botonera CS-101
+    _conditions:
+    - _kind: 4
+      _target: 
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - CS-101

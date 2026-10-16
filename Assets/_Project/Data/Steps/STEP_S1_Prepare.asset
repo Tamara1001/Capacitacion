@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e770c70b6dcec4292667b020d3dcb2, type: 3}
+  m_Name: STEP_S1_Prepare
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Procedure.StepDefinition
+  _id: S1
+  _title: "Preparar la intervenci\xF3n"
+  _description: "Le\xE9 la orden de trabajo, identific\xE1 cada fuente de energ\xEDa
+    de la P-101 en su r\xF3tulo y tom\xE1 el kit LOTO."
+  _ordered: 0
+  _tasks:
+  - _id: S1.order
+    _description: Leer la orden de trabajo OT-0427
+    _conditions:
+    - _kind: 6
+      _target: ot.read
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - WORK-ORDER
+  - _id: S1.ds101
+    _description: Identificar el seccionador DS-101 en el tablero
+    _conditions:
+    - _kind: 6
+      _target: identify.DS-101
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - PLATE-DS-101
+  - _id: S1.valves
+    _description: "Identificar las v\xE1lvulas V-101 y V-102"
+    _conditions:
+    - _kind: 6
+      _target: identify.V-101
+      _state: 0
+      _item: 0
+    - _kind: 6
+      _target: identify.V-102
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - PLATE-V-101
+  - _id: S1.bleed
+    _description: Identificar la purga V-103
+    _conditions:
+    - _kind: 6
+      _target: identify.V-103
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - PLATE-V-103
+  - _id: S1.kit
+    _description: "Tomar el kit LOTO de la estaci\xF3n de bloqueo"
+    _conditions:
+    - _kind: 6
+      _target: kit.collected
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - LOTO-STATION

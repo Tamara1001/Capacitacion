@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e770c70b6dcec4292667b020d3dcb2, type: 3}
+  m_Name: STEP_S4_Lockout
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Procedure.StepDefinition
+  _id: S4
+  _title: Aplicar bloqueo y etiquetado
+  _description: "Eleg\xED el dispositivo del kit con 1, 2 o 3 y hac\xE9 click en
+    el punto de aislamiento. En las v\xE1lvulas: bloqueo, candado y etiqueta."
+  _ordered: 0
+  _tasks:
+  - _id: S4.ds101
+    _description: 'DS-101: candado y etiqueta'
+    _conditions:
+    - _kind: 1
+      _target: DS-101
+      _state: 0
+      _item: 1
+    - _kind: 1
+      _target: DS-101
+      _state: 0
+      _item: 2
+    _highlightIds:
+    - DS-101
+  - _id: S4.v102
+    _description: "V-102: bloqueo de v\xE1lvula, candado y etiqueta"
+    _conditions:
+    - _kind: 1
+      _target: V-102
+      _state: 0
+      _item: 3
+    - _kind: 1
+      _target: V-102
+      _state: 0
+      _item: 1
+    - _kind: 1
+      _target: V-102
+      _state: 0
+      _item: 2
+    _highlightIds:
+    - V-102
+  - _id: S4.v101
+    _description: "V-101: bloqueo de v\xE1lvula, candado y etiqueta"
+    _conditions:
+    - _kind: 1
+      _target: V-101
+      _state: 0
+      _item: 3
+    - _kind: 1
+      _target: V-101
+      _state: 0
+      _item: 1
+    - _kind: 1
+      _target: V-101
+      _state: 0
+      _item: 2
+    _highlightIds:
+    - V-101

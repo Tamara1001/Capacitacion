@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3e770c70b6dcec4292667b020d3dcb2, type: 3}
+  m_Name: STEP_S6_Verify
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Procedure.StepDefinition
+  _id: S6
+  _title: Verificar el aislamiento
+  _description: "Intent\xE1 arrancar con START: la bomba no debe arrancar. Volv\xE9
+    a STOP, confirm\xE1 0 bar y realiz\xE1 el trabajo."
+  _ordered: 1
+  _tasks:
+  - _id: S6.tryout
+    _description: 'Prueba de arranque: presionar START'
+    _conditions:
+    - _kind: 7
+      _target: control.start
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - CS-101
+  - _id: S6.stop
+    _description: Volver el mando a STOP
+    _conditions:
+    - _kind: 7
+      _target: control.stop
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - CS-101
+  - _id: S6.gauge
+    _description: "Leer el man\xF3metro PI-101 en 0 bar"
+    _conditions:
+    - _kind: 7
+      _target: gauge.read.zero
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - PI-101
+  - _id: S6.work
+    _description: "Realizar el cambio de sello mec\xE1nico"
+    _conditions:
+    - _kind: 6
+      _target: maintenance.done
+      _state: 0
+      _item: 0
+    _highlightIds:
+    - P-101
