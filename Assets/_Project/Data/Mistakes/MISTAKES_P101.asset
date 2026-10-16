@@ -1,0 +1,128 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52c15c76f1e538c49b3dd41935f6fcef, type: 3}
+  m_Name: MISTAKES_P101
+  m_EditorClassIdentifier: LotoSim.Runtime::LotoSim.Evaluation.MistakeCatalog
+  _mistakes:
+  - _id: PPE_CAP
+    _severity: 0
+    _title: 'EPP inadecuado: gorra'
+    _explanation: Una gorra no protege contra impactos. El casco de seguridad es
+      obligatorio.
+    _triggerSignal: ppe.wrong.cap
+  - _id: PPE_CLOTH_GLOVES
+    _severity: 0
+    _title: 'EPP inadecuado: guantes de tela'
+    _explanation: "Los guantes de tela no a\xEDslan. Frente a riesgo el\xE9ctrico
+      se usan guantes diel\xE9ctricos."
+    _triggerSignal: ppe.wrong.cloth-gloves
+  - _id: PPE_HEADPHONES
+    _severity: 0
+    _title: "Distracci\xF3n: auriculares de m\xFAsica"
+    _explanation: "Los auriculares impiden escuchar alarmas y avisos. No son elementos
+      de protecci\xF3n."
+    _triggerSignal: ppe.wrong.headphones
+  - _id: PPE_MISSING
+    _severity: 0
+    _title: "Intervenci\xF3n sin EPP completo"
+    _explanation: "Antes de intervenir hay que colocarse casco, anteojos de seguridad
+      y guantes diel\xE9ctricos."
+    _triggerSignal: 
+  - _id: ID_WRONG_DS100
+    _severity: 0
+    _title: Fuente mal identificada (DS-100)
+    _explanation: "DS-100 alimenta al compresor C-201, no a la P-101. Verific\xE1
+      siempre el r\xF3tulo del equipo."
+    _triggerSignal: identify.wrong.DS-100
+  - _id: ID_WRONG_DS102
+    _severity: 0
+    _title: Fuente mal identificada (DS-102)
+    _explanation: "DS-102 alimenta a la ventilaci\xF3n, no a la P-101. Verific\xE1
+      siempre el r\xF3tulo del equipo."
+    _triggerSignal: identify.wrong.DS-102
+  - _id: NOTIFY_WRONG
+    _severity: 0
+    _title: "Comunicaci\xF3n incompleta al operador"
+    _explanation: "Hay que avisar qu\xE9 equipo se interviene, por qu\xE9 y que quedar\xE1
+      fuera de servicio."
+    _triggerSignal: dialogue.wrong.DLG_NotifyStop
+  - _id: NOTIFY_RESTORE_WRONG
+    _severity: 0
+    _title: Restablecimiento mal comunicado
+    _explanation: "Quien coloc\xF3 el bloqueo avisa al personal y restablece el equipo
+      de forma controlada."
+    _triggerSignal: dialogue.wrong.DLG_NotifyRestore
+  - _id: VALVE_ORDER
+    _severity: 0
+    _title: "Orden de cierre de v\xE1lvulas incorrecto"
+    _explanation: "Primero se cierra la descarga (V-102) y despu\xE9s la succi\xF3n
+      (V-101)."
+    _triggerSignal: 
+  - _id: TAG_WITHOUT_LOCK
+    _severity: 0
+    _title: Etiqueta sin candado
+    _explanation: "La etiqueta sola no impide operar el equipo: primero se coloca
+      el candado y despu\xE9s la etiqueta."
+    _triggerSignal: 
+  - _id: RESTORE_NO_NOTIFY
+    _severity: 0
+    _title: Bloqueos retirados sin avisar
+    _explanation: Antes de retirar los bloqueos hay que avisar al personal afectado
+      que el equipo se va a restablecer.
+    _triggerSignal: 
+  - _id: RESTORE_VALVE_ORDER
+    _severity: 0
+    _title: "Orden de apertura de v\xE1lvulas incorrecto"
+    _explanation: "Al restablecer se abre primero la succi\xF3n (V-101) y despu\xE9s
+      la descarga (V-102)."
+    _triggerSignal: 
+  - _id: RESTORE_TOOLS
+    _severity: 0
+    _title: "Equipo energizado con herramientas en el \xE1rea"
+    _explanation: "Antes de energizar, el \xE1rea debe quedar libre de herramientas
+      y materiales."
+    _triggerSignal: 
+  - _id: RESTORE_BLEED_OPEN
+    _severity: 0
+    _title: Equipo energizado con la purga abierta
+    _explanation: "Cerr\xE1 la purga V-103 antes de restablecer la energ\xEDa."
+    _triggerSignal: 
+  - _id: SWITCH_UNDER_LOAD
+    _severity: 1
+    _title: Corte del seccionador bajo carga
+    _explanation: 'El seccionador no se abre con el equipo en marcha: primero se
+      detiene con su mando normal (STOP).'
+    _triggerSignal: 
+  - _id: DEADHEAD
+    _severity: 1
+    _title: "V\xE1lvula cerrada con la bomba en marcha"
+    _explanation: "Cerrar v\xE1lvulas con la bomba funcionando la da\xF1a y puede
+      romper la l\xEDnea. Primero deten\xE9 el equipo."
+    _triggerSignal: 
+  - _id: PRESSURIZED_BLEED
+    _severity: 1
+    _title: "Purga abierta con la l\xEDnea presurizada"
+    _explanation: "Se liber\xF3 presi\xF3n sin aislar: con una v\xE1lvula abierta
+      o la bomba en marcha la purga descarga sin control."
+    _triggerSignal: 
+  - _id: WORK_WITHOUT_VERIFY
+    _severity: 1
+    _title: Trabajo sin verificar el aislamiento
+    _explanation: "Nunca se interviene el equipo sin bloquear, liberar la energ\xEDa
+      y verificar con la prueba de arranque y el man\xF3metro."
+    _triggerSignal: 
+  - _id: LOCK_REMOVED_EARLY
+    _severity: 1
+    _title: Bloqueo retirado antes de terminar el trabajo
+    _explanation: "Los candados y bloqueos s\xF3lo se retiran cuando el trabajo termin\xF3
+      y el \xE1rea es segura."
+    _triggerSignal: 

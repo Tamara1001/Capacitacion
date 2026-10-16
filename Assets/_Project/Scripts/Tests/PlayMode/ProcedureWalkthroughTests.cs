@@ -1,6 +1,7 @@
 using System.Collections;
 using LotoSim.Core;
 using LotoSim.Devices;
+using LotoSim.Evaluation;
 using LotoSim.Interaction;
 using LotoSim.Procedure;
 using NUnit.Framework;
@@ -99,6 +100,7 @@ namespace LotoSim.Tests
             Use("StopButton");
             Use("PI-101");
             Use("P-101");
+            yield return new WaitForSecondsRealtime(1f); // fundido del mantenimiento
 
             // S7 — Finalizar y restablecer
             AssertStep("S7");
@@ -122,6 +124,54 @@ namespace LotoSim.Tests
             Assert.IsTrue(pump.IsRunning, "La bomba debe volver a operar");
             Assert.IsTrue(_runner.Progress.IsComplete, "El procedimiento debe completarse");
             Assert.AreEqual(GameState.Completed, GameFlow.State);
+
+            var tracker = Services.Get<AssessmentTracker>();
+            Assert.IsEmpty(tracker.Records, "La secuencia correcta no debe registrar errores: " + DescribeMistakes(tracker));
+            Assert.IsNotNull(tracker.LastReport);
+            Assert.AreEqual(100, tracker.LastReport.Score);
+            Assert.IsTrue(tracker.LastReport.Passed);
+        }
+
+        [UnityTest]
+        public IEnumerator SwitchOffWhileRunning_WithoutPpe_ReportsCriticalAndMinor()
+        {
+            yield return SceneManager.LoadSceneAsync("PumpRoom");
+            yield return null;
+
+            var kit = Object.FindFirstObjectByType<LotoKit>();
+            _interactor = new ScriptedInteractor(kit, kit.transform);
+            var tracker = Services.Get<AssessmentTracker>();
+
+            Use("DS-101");
+            yield return null;
+
+            Assert.IsTrue(tracker.HasReported(MistakeIds.SwitchUnderLoad), DescribeMistakes(tracker));
+            Assert.IsTrue(tracker.HasReported(MistakeIds.PpeMissing), DescribeMistakes(tracker));
+        }
+
+        [UnityTest]
+        public IEnumerator BleedBeforeIsolating_ReportsPressurizedBleed()
+        {
+            yield return SceneManager.LoadSceneAsync("PumpRoom");
+            yield return null;
+
+            var kit = Object.FindFirstObjectByType<LotoKit>();
+            _interactor = new ScriptedInteractor(kit, kit.transform);
+            var tracker = Services.Get<AssessmentTracker>();
+
+            Use("V-103");
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(tracker.HasReported(MistakeIds.PressurizedBleed), DescribeMistakes(tracker));
+        }
+
+        private static string DescribeMistakes(AssessmentTracker tracker)
+        {
+            var ids = new System.Collections.Generic.List<string>();
+            foreach (var record in tracker.Records)
+                ids.Add(record.Mistake.Id);
+            return "errores: [" + string.Join(", ", ids) + "]";
         }
 
         private void AssertStep(string stepId)

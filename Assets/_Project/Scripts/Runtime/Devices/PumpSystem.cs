@@ -65,13 +65,11 @@ namespace LotoSim.Devices
             if (_coupling != null && _model.IsRunning)
                 _coupling.Rotate(Vector3.up, _couplingDegreesPerSecond * Time.deltaTime, Space.Self);
 
-            if (_model.IsLeaking && !_lastLeaking)
-                Toasts.Show("¡Sale agua por la purga! La línea sigue presurizada.", ToastKind.Error);
-
             if (_model.IsEnergized != _lastEnergized || _model.IsRunning != _lastRunning ||
-                _model.IsDepressurized != _lastDepressurized)
+                _model.IsDepressurized != _lastDepressurized || _model.IsLeaking != _lastLeaking)
             {
-                SimEvents.Publish(new PumpStateChanged(_model.IsEnergized, _model.IsRunning, _model.IsDepressurized));
+                SimEvents.Publish(new PumpStateChanged(
+                    _model.IsEnergized, _model.IsRunning, _model.IsDepressurized, _model.IsLeaking));
             }
             CacheState();
         }

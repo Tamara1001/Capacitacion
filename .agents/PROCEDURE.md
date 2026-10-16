@@ -76,10 +76,18 @@ Kit LOTO (estación de bloqueo en la pared): 3 candados rojos personales (misma 
 
 ---
 
+## Catálogo de errores implementado
+Menores (−5): EPP equivocado (gorra, guantes de tela, auriculares), intervención sin EPP completo, fuente mal identificada (DS-100/DS-102), comunicación incorrecta al operador (al detener y al restablecer), orden de cierre de válvulas, etiqueta sin candado, bloqueos retirados sin avisar, orden de apertura de válvulas, energizar con herramientas en el área, energizar con la purga abierta.
+
+Críticos (−20): corte del seccionador bajo carga, válvula cerrada con la bomba en marcha, purga abierta con la línea presurizada, trabajo sin verificar el aislamiento, bloqueo retirado antes de terminar el trabajo.
+
+Textos editables en `Data/Mistakes/MISTAKES_P101.asset` (o en `ProcedureDataBuilder.BuildMistakes`).
+
 ## Reglas de evaluación
 - **Severidades:** `Minor` (−5 pts), `Critical` (−20 pts, se marca en rojo en el reporte con explicación). Puntaje base 100, mínimo 0.
 - **Aprobado:** ≥ 70 y **sin errores críticos**.
-- **Orden de pasos:** las acciones de un paso posterior pueden ejecutarse antes (se permite), pero cada desvío de orden genera un `Minor` "Fuera de orden" salvo que exista un error más específico.
+- **Orden de pasos:** se permite adelantar acciones; los desvíos de orden peligrosos o relevantes tienen su error específico (no hay un "fuera de orden" genérico en v1).
+- Cada tipo de error se cuenta una sola vez por sesión.
 - **Tiempo:** se mide desde el inicio del paso 0 hasta el arranque final; se muestra, no penaliza en v1.
 
 ## Diferencias por modo

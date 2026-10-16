@@ -26,7 +26,7 @@ MonoBehaviour:
       _state: 0
       _item: 0
     _highlightIds:
-    - PPE
+    - PPE-HELMET
   - _id: S0.glasses
     _description: Colocarse los anteojos de seguridad
     _conditions:
@@ -35,7 +35,7 @@ MonoBehaviour:
       _state: 0
       _item: 0
     _highlightIds:
-    - PPE
+    - PPE-GLASSES
   - _id: S0.gloves
     _description: "Colocarse los guantes diel\xE9ctricos"
     _conditions:
@@ -44,4 +44,4 @@ MonoBehaviour:
       _state: 0
       _item: 0
     _highlightIds:
-    - PPE
+    - PPE-GLOVES

@@ -29,18 +29,19 @@ Marcar `[x]` al completar. Cada hito termina con una build WebGL probada.
 - [x] Recorrido completo jugable de punta a punta (modo guiado sin resaltados aún)
 
 ## M2 — Loop completo de capacitación (días 5–6)
-- [ ] `HazardRule`s y `AssessmentTracker` (severidades, puntaje, orden, tiempo)
-- [ ] `GuidanceController`: outline, marcadores, ghosts, toasts de error
-- [ ] Modo Evaluación (sin guía)
-- [x] EPP: locker con distractores (lógica; feedback de error fino en M2)
-- [x] Operador NPC + diálogo con 3 opciones (radio pendiente)
-- [x] Try-out y "mantenimiento realizado" con herramientas en el piso (falta el fade)
+- [x] `MistakeCatalog` (19 errores) + `HazardMonitor` + `AssessmentTracker` (severidades, puntaje, tiempo; un registro por tipo de error)
+- [x] `GuidanceController`: pulso de emisión + marcador flotante, fantasmas de dispositivos LOTO, explicación de errores (outline real queda para M3)
+- [x] Modo Evaluación (sin guía, sin descripción ni tareas; errores sólo en el reporte)
+- [x] EPP: locker con distractores
+- [x] Operador NPC + diálogo con 3 opciones (radio: backlog)
+- [x] Try-out y "mantenimiento realizado" con fundido y herramientas en el piso
 - [x] Paso 7 completo (retiro de bloqueos con llave, restablecer, arranque)
-- [ ] Menú, Briefing, Opciones, Reporte (funcionales, estilo básico) — pausa y pantalla de fin básicas ya existen
-- [ ] Volver a poner `Menu` como escena 0 del build (en M1 `PumpRoom` es la 0 para probar directo)
-- [ ] `StationTeleport` (T) con fade
+- [x] Menú (nombre, modos, opciones, créditos), Briefing, Pausa con opciones (sensibilidad, invertir Y; guardadas en PlayerPrefs), Reporte
+- [x] `Menu` como escena 0 del build (`LotoSim/Greybox/Construir todo`)
+- [x] `StationTeleport` (T + 1–5) con fundido
 - [x] Play Mode smoke test del procedimiento completo
-- [ ] Build WebGL M2 en itch (privada)
+- [x] Build WebGL M2 local
+- [ ] Subir a itch.io (privada) — requiere cuenta/butler de la dueña del proyecto
 
 ## M3 — Arte y audio v1 (días 7–9)
 - [ ] Atlas de paleta + material `M_Palette`; shaders de outline/ghost

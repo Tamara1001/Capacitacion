@@ -17,14 +17,23 @@ namespace LotoSim.Devices
         [SerializeField, Tooltip("Objetos que aparecen al terminar el mantenimiento")]
         private GameObject[] _spawnOnDone;
 
-        public bool CanInteract(IInteractor interactor) => !Signals.HasFlag(MaintenanceDoneFlag);
+        private bool _inProgress;
+
+        public bool CanInteract(IInteractor interactor) => !_inProgress && !Signals.HasFlag(MaintenanceDoneFlag);
 
         public string GetPrompt(IInteractor interactor) =>
             Signals.HasFlag(MaintenanceDoneFlag) ? "Sello mecánico reemplazado" : "Realizar el cambio de sello mecánico";
 
         public void Interact(IInteractor interactor)
         {
+            _inProgress = true;
             Signals.Emit(MaintenanceStartedSignal);
+            ScreenFade.Run(CompleteMaintenance);
+        }
+
+        private void CompleteMaintenance()
+        {
+            _inProgress = false;
             Signals.RaiseFlag(MaintenanceDoneFlag);
             foreach (var spawned in _spawnOnDone)
             {

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using LotoSim.Core;
 using LotoSim.Interaction;
 using UnityEngine;
@@ -24,6 +25,10 @@ namespace LotoSim.Devices
         [SerializeField]
         private GameObject _tagVisual;
 
+        [SerializeField, Tooltip("Material semitransparente para el contorno fantasma (modo guiado)")]
+        private Material _ghostMaterial;
+
+        private readonly Dictionary<LotoItemType, GameObject> _ghosts = new();
         private Device _device;
         private bool _hasLockout;
         private bool _hasPadlock;
@@ -114,6 +119,37 @@ namespace LotoSim.Devices
             RefreshVisuals();
             SimEvents.Publish(new SocketChanged(_device.DeviceId, type, placed));
         }
+
+        /// <summary>Muestra el fantasma del dispositivo indicado (None oculta todos).</summary>
+        public void ShowGhost(LotoItemType type)
+        {
+            foreach (var pair in _ghosts)
+                pair.Value.SetActive(pair.Key == type);
+            if (type == LotoItemType.None || _ghosts.ContainsKey(type) || _ghostMaterial == null)
+                return;
+
+            var visual = VisualFor(type);
+            if (visual == null)
+                return;
+            var ghost = Instantiate(visual, visual.transform.parent);
+            ghost.name = $"Ghost_{type}";
+            ghost.transform.SetLocalPositionAndRotation(visual.transform.localPosition, visual.transform.localRotation);
+            ghost.transform.localScale = visual.transform.localScale * 1.08f;
+            foreach (var r in ghost.GetComponentsInChildren<Renderer>())
+                r.sharedMaterial = _ghostMaterial;
+            foreach (var c in ghost.GetComponentsInChildren<Collider>())
+                Destroy(c);
+            ghost.SetActive(true);
+            _ghosts[type] = ghost;
+        }
+
+        private GameObject VisualFor(LotoItemType type) => type switch
+        {
+            LotoItemType.ValveLockout => _lockoutVisual,
+            LotoItemType.Padlock => _padlockVisual,
+            LotoItemType.Tag => _tagVisual,
+            _ => null
+        };
 
         private void RefreshVisuals()
         {

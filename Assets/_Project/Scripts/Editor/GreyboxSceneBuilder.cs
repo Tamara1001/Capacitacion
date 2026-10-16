@@ -1,5 +1,7 @@
 using LotoSim.Core;
 using LotoSim.Devices;
+using LotoSim.Evaluation;
+using LotoSim.Guidance;
 using LotoSim.Interaction;
 using LotoSim.Player;
 using LotoSim.Procedure;
@@ -41,6 +43,7 @@ namespace LotoSim.Editor
         private static Material Blue => Mat("Blue", "#2D7FF9");
         private static Material Worker => Mat("Worker", "#4A6B8A");
         private static Material Pilot => Mat("Pilot", "#3BB273", 0.6f, emissive: true);
+        private static Material Ghost => TransparentMat("Ghost", "#FFC629", 0.45f);
 
         [MenuItem("LotoSim/Greybox/Construir PumpRoom", priority = 40)]
         public static void Build()
@@ -68,13 +71,15 @@ namespace LotoSim.Editor
             var disconnect = BuildElectricalPanel(devices);
             var pump = BuildPump(devices, disconnect);
             BuildOperator(npc);
-            var (kit, interactor) = BuildPlayer(playerRoot);
+            var player = BuildPlayer(playerRoot);
 
             var runner = new GameObject("ProcedureRunner").AddComponent<ProcedureRunner>();
             runner.transform.SetParent(systems, false);
             Set(runner, ("_procedure", procedure), ("_pump", pump));
+            BuildEvaluationAndGuidance(systems, runner, pump, player.Kit);
+            AddHighlightTargets(scene);
 
-            BuildUi(ui, kit, interactor);
+            BuildUi(ui, player);
 
             MarkStatic(environment);
 
@@ -82,6 +87,48 @@ namespace LotoSim.Editor
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
             Debug.Log("[LotoSim] Escena PumpRoom (greybox) construida");
+        }
+
+        // ---------------------------------------------------------------- Evaluación y guía
+
+        private static readonly string[] HighlightNames =
+        {
+            "PPE-HELMET", "PPE-GLASSES", "PPE-GLOVES", "WORK-ORDER", "LOTO-STATION", "OPERATOR",
+            "PLATE-DS-101", "PLATE-V-101", "PLATE-V-102", "PLATE-V-103",
+            "DS-101", "V-101", "V-102", "V-103", "PI-101", "P-101", "CS-101",
+            "TOOL-WRENCH", "TOOL-SCREWDRIVER"
+        };
+
+        private static void BuildEvaluationAndGuidance(Transform systems, ProcedureRunner runner, PumpSystem pump, LotoKit kit)
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<MistakeCatalog>(ProcedureDataBuilder.MistakeCatalogPath);
+
+            var tracker = new GameObject("AssessmentTracker").AddComponent<AssessmentTracker>();
+            tracker.transform.SetParent(systems, false);
+            Set(tracker, ("_catalog", catalog), ("_runner", runner));
+
+            var hazards = new GameObject("HazardMonitor").AddComponent<HazardMonitor>();
+            hazards.transform.SetParent(systems, false);
+            Set(hazards, ("_tracker", tracker), ("_pump", pump), ("_runner", runner));
+
+            var guidance = new GameObject("GuidanceController").AddComponent<GuidanceController>();
+            guidance.transform.SetParent(systems, false);
+            var marker = Box("GuideMarker", guidance.transform, Vector3.zero, Vector3.one * 0.06f,
+                Mat("Guide", "#FFC629", 0.2f, emissive: true), false, new Vector3(45f, 0f, 45f));
+            marker.SetActive(false);
+            Set(guidance, ("_runner", runner), ("_kit", kit), ("_markerTemplate", marker));
+        }
+
+        private static void AddHighlightTargets(UnityEngine.SceneManagement.Scene scene)
+        {
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (System.Array.IndexOf(HighlightNames, t.name) >= 0 && !t.TryGetComponent<HighlightTarget>(out _))
+                        t.gameObject.AddComponent<HighlightTarget>();
+                }
+            }
         }
 
         // ---------------------------------------------------------------- Ambiente
@@ -143,18 +190,16 @@ namespace LotoSim.Editor
             float z = -2.55f;
             PpeItem(ppe, "PPE-HELMET", "Casco de seguridad", "ppe.helmet", null, "Casco colocado.", ref z,
                 t => Sphere("Mesh", t, Vector3.zero, new Vector3(0.24f, 0.15f, 0.24f), Yellow));
-            PpeItem(ppe, "PPE-CAP", "Gorra", null, "ppe.wrong.cap",
-                "Una gorra no protege contra impactos: no es EPP adecuado.", ref z,
+            // Los distractores no muestran aviso propio: el error lo explica la evaluación (sólo en modo guiado).
+            PpeItem(ppe, "PPE-CAP", "Gorra", null, "ppe.wrong.cap", null, ref z,
                 t => Sphere("Mesh", t, Vector3.zero, new Vector3(0.2f, 0.09f, 0.2f), Blue));
             PpeItem(ppe, "PPE-GLASSES", "Anteojos de seguridad", "ppe.glasses", null, "Anteojos colocados.", ref z,
                 t => Box("Mesh", t, Vector3.zero, new Vector3(0.06f, 0.04f, 0.17f), Dark));
-            PpeItem(ppe, "PPE-CLOTH-GLOVES", "Guantes de tela", null, "ppe.wrong.cloth-gloves",
-                "Los guantes de tela no aíslan: necesitás guantes dieléctricos.", ref z,
+            PpeItem(ppe, "PPE-CLOTH-GLOVES", "Guantes de tela", null, "ppe.wrong.cloth-gloves", null, ref z,
                 t => Box("Mesh", t, Vector3.zero, new Vector3(0.12f, 0.05f, 0.17f), White));
             PpeItem(ppe, "PPE-GLOVES", "Guantes dieléctricos", "ppe.gloves", null, "Guantes dieléctricos colocados.", ref z,
                 t => Box("Mesh", t, Vector3.zero, new Vector3(0.12f, 0.05f, 0.17f), Orange));
-            PpeItem(ppe, "PPE-HEADPHONES", "Auriculares de música", null, "ppe.wrong.headphones",
-                "Los auriculares de música te aíslan de alarmas y avisos: no son EPP.", ref z,
+            PpeItem(ppe, "PPE-HEADPHONES", "Auriculares de música", null, "ppe.wrong.headphones", null, ref z,
                 t => Box("Mesh", t, Vector3.zero, new Vector3(0.08f, 0.14f, 0.18f), Red));
         }
 
@@ -171,7 +216,7 @@ namespace LotoSim.Editor
                 ("_prompt", $"Tomar: {name}"),
                 ("_flag", flag ?? string.Empty),
                 ("_signal", wrongSignal ?? string.Empty),
-                ("_toast", toast),
+                ("_toast", toast ?? string.Empty),
                 ("_toastKind", correct ? ToastKind.Success : ToastKind.Warning),
                 ("_deactivateOnUse", true));
             z += 0.26f;
@@ -240,7 +285,7 @@ namespace LotoSim.Editor
                 ("_inactiveEuler", new Vector3(0f, 0f, -150f)),
                 ("_startsActive", true));
             var socket = root.AddComponent<LotoSocket>();
-            Set(socket, ("_requiresLockout", false), ("_padlockVisual", padlock), ("_tagVisual", tag));
+            Set(socket, ("_requiresLockout", false), ("_padlockVisual", padlock), ("_tagVisual", tag), ("_ghostMaterial", Ghost));
             return device;
         }
 
@@ -250,7 +295,7 @@ namespace LotoSim.Editor
             Box("Body", root, Vector3.zero, new Vector3(0.3f, 0.42f, 0.12f), Steel);
             Box("Lever", root, new Vector3(0f, 0.11f, -0.07f), new Vector3(0.05f, 0.22f, 0.05f), Red, false);
             IdPlate(panel, $"PLATE-{id}", new Vector3(x, 1.6f, -0.07f), Vector3.zero, $"{id}\n{load}",
-                null, $"identify.wrong.{id}", $"{id} alimenta a {load}, no a la P-101.");
+                null, $"identify.wrong.{id}", null);
         }
 
         private static void IdPlate(Transform parent, string id, Vector3 pos, Vector3 euler, string text,
@@ -264,7 +309,7 @@ namespace LotoSim.Editor
                 ("_prompt", $"Identificar fuente: {text.Replace('\n', ' ')}"),
                 ("_flag", flag ?? string.Empty),
                 ("_signal", wrongSignal ?? string.Empty),
-                ("_toast", toast),
+                ("_toast", toast ?? string.Empty),
                 ("_toastKind", flag != null ? ToastKind.Success : ToastKind.Warning),
                 ("_deactivateOnUse", false));
         }
@@ -385,7 +430,7 @@ namespace LotoSim.Editor
                 ("_inactiveEuler", closedEuler),
                 ("_startsActive", true));
             var socket = root.AddComponent<LotoSocket>();
-            Set(socket, ("_requiresLockout", true), ("_lockoutVisual", lockout), ("_padlockVisual", padlock), ("_tagVisual", tag));
+            Set(socket, ("_requiresLockout", true), ("_lockoutVisual", lockout), ("_padlockVisual", padlock), ("_tagVisual", tag), ("_ghostMaterial", Ghost));
             return valve;
         }
 
@@ -463,7 +508,15 @@ namespace LotoSim.Editor
 
         // ---------------------------------------------------------------- Jugador
 
-        private static (LotoKit, DesktopInteractor) BuildPlayer(Transform parent)
+        private sealed class PlayerRefs
+        {
+            public LotoKit Kit;
+            public DesktopInteractor Interactor;
+            public DesktopLook Look;
+            public StationTeleport Stations;
+        }
+
+        private static PlayerRefs BuildPlayer(Transform parent)
         {
             var player = Empty("Player", parent, new Vector3(-4.3f, 0f, -3.7f));
             player.layer = 2; // Ignore Raycast: el raycast de interacción no se pega al jugador.
@@ -487,24 +540,41 @@ namespace LotoSim.Editor
 
             var look = player.AddComponent<DesktopLook>();
             Set(look, ("_body", player.transform), ("_pitchPivot", cameraGo.transform));
-            return (kit, interactor);
+
+            var stations = player.AddComponent<StationTeleport>();
+            var points = Empty("StationPoints", parent, Vector3.zero).transform;
+            var list = new (string name, Vector3 pos, float yaw)[]
+            {
+                ("Locker de EPP", new Vector3(-4.6f, 0f, -2.1f), -90f),
+                ("Estación de bloqueo", new Vector3(-4.9f, 0f, 1.0f), -90f),
+                ("Tablero eléctrico TG-1", new Vector3(-3f, 0f, 3.1f), 0f),
+                ("Bomba P-101", new Vector3(0.4f, 0f, -0.5f), 0f),
+                ("Puesto del operador", new Vector3(3.0f, 0f, -2.7f), 90f)
+            };
+            var so = new SerializedObject(stations);
+            var array = so.FindProperty("_stations");
+            array.arraySize = list.Length;
+            for (int i = 0; i < list.Length; i++)
+            {
+                var point = Empty($"Station_{i + 1}", points, list[i].pos, new Vector3(0f, list[i].yaw, 0f));
+                var element = array.GetArrayElementAtIndex(i);
+                element.FindPropertyRelative("_name").stringValue = list[i].name;
+                element.FindPropertyRelative("_point").objectReferenceValue = point.transform;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return new PlayerRefs { Kit = kit, Interactor = interactor, Look = look, Stations = stations };
         }
 
         // ---------------------------------------------------------------- UI
 
-        private static void BuildUi(Transform parent, LotoKit kit, DesktopInteractor interactor)
+        private static readonly Vector2 Center = new(0.5f, 0.5f);
+
+        private static void BuildUi(Transform parent, PlayerRefs player)
         {
             var eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             eventSystem.transform.SetParent(parent, false);
-
-            var canvasGo = new GameObject("HUD", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            canvasGo.transform.SetParent(parent, false);
-            canvasGo.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
-            var scaler = canvasGo.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-            var canvas = canvasGo.transform;
+            var canvas = CreateCanvas(parent, "HUD", 0).transform;
 
             // Paso actual.
             var stepPanel = Panel("StepPanel", canvas, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(600f, 0f));
@@ -521,12 +591,18 @@ namespace LotoSim.Editor
             stepBody.color = new Color(0.85f, 0.87f, 0.9f);
             var tasks = Text("Tasks", stepPanel.transform, 21, TextAlignmentOptions.TopLeft);
 
+            // Viñeta de error (debajo del resto).
+            var vignette = Panel("ErrorVignette", canvas, Center, Center, Vector2.zero, Vector2.zero, "#E5484D", 0f);
+            StretchFull(vignette.rectTransform);
+            vignette.raycastTarget = false;
+            vignette.transform.SetAsFirstSibling();
+
             // Centro de pantalla.
-            var crosshair = Panel("Crosshair", canvas, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(8f, 8f), "#FFFFFF", 0.9f);
+            var crosshair = Panel("Crosshair", canvas, Center, Center, Vector2.zero, new Vector2(8f, 8f), "#FFFFFF", 0.9f);
             crosshair.raycastTarget = false;
-            var promptRect = Rect("Prompt", canvas, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 1f), new Vector2(0f, -36f), new Vector2(1200f, 60f));
+            var promptRect = Rect("Prompt", canvas, Center, new Vector2(0.5f, 1f), new Vector2(0f, -36f), new Vector2(1200f, 60f));
             var prompt = Text("Text", promptRect, 26, TextAlignmentOptions.Top);
-            var hintRect = Rect("Hint", canvas, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 90f), new Vector2(1200f, 60f));
+            var hintRect = Rect("Hint", canvas, Center, Center, new Vector2(0f, 90f), new Vector2(1200f, 60f));
             var hint = Text("Text", hintRect, 32, TextAlignmentOptions.Center,
                 "<mark=#1C1F24CC padding=\"24,24,10,10\">Hacé click para controlar la cámara</mark>");
 
@@ -534,43 +610,134 @@ namespace LotoSim.Editor
             var kitPanel = Panel("KitBar", canvas, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(1300f, 56f));
             var kitText = Text("Text", kitPanel.transform, 22, TextAlignmentOptions.Center);
 
-            // Avisos.
-            var toastPanel = Panel("Toast", canvas, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -24f), new Vector2(900f, 72f));
-            var toastText = Text("Text", toastPanel.transform, 24, TextAlignmentOptions.Center);
-            toastText.margin = new Vector4(16f, 8f, 16f, 8f);
+            // Avisos (a la derecha del panel de pasos para no superponerse).
+            var toastPanel = Panel("Toast", canvas, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -24f), new Vector2(760f, 0f));
+            var toastLayout = toastPanel.gameObject.AddComponent<VerticalLayoutGroup>();
+            toastLayout.padding = new RectOffset(24, 24, 16, 16);
+            toastLayout.childControlHeight = true;
+            toastLayout.childControlWidth = true;
+            toastPanel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var toastText = Text("Text", toastPanel.transform, 23, TextAlignmentOptions.TopLeft);
 
             // Diálogo.
             var dialoguePanel = Panel("Dialogue", canvas, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 110f), new Vector2(1100f, 340f));
             var dialogueText = Text("Text", dialoguePanel.transform, 24, TextAlignmentOptions.TopLeft);
             dialogueText.margin = new Vector4(28f, 24f, 28f, 24f);
 
-            // Pausa.
-            var pause = Panel("Pause", canvas, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, "#000000", 0.6f);
+            // Mapa de estaciones.
+            var stationPanel = Panel("StationMap", canvas, Center, Center, Vector2.zero, new Vector2(560f, 360f));
+            var stationText = Text("Text", stationPanel.transform, 26, TextAlignmentOptions.TopLeft);
+            stationText.margin = new Vector4(32f, 28f, 32f, 28f);
+
+            // Pausa + opciones.
+            var pause = Panel("Pause", canvas, Center, Center, Vector2.zero, Vector2.zero, "#000000", 0.6f);
             StretchFull(pause.rectTransform);
-            var pauseBox = Panel("Box", pause.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(520f, 340f));
-            var pauseTitle = Text("Title", pauseBox.transform, 40, TextAlignmentOptions.Top, "Pausa");
-            pauseTitle.margin = new Vector4(0f, 30f, 0f, 0f);
-            var resume = Button("Resume", pauseBox.transform, new Vector2(0f, 0f), new Vector2(320f, 64f), "Continuar");
-            var restart = Button("Restart", pauseBox.transform, new Vector2(0f, -90f), new Vector2(320f, 64f), "Reiniciar");
+            var pauseBox = Panel("Box", pause.transform, Center, Center, Vector2.zero, new Vector2(560f, 560f));
+            var pauseTitle = Text("Title", pauseBox.transform, 40, TextAlignmentOptions.Top, "<b>Pausa</b>");
+            pauseTitle.margin = new Vector4(0f, 28f, 0f, 0f);
+            var resume = Button("Resume", pauseBox.transform, new Vector2(0f, 150f), new Vector2(360f, 60f), "Continuar");
+            var restart = Button("Restart", pauseBox.transform, new Vector2(0f, 75f), new Vector2(360f, 60f), "Reiniciar", "#2E3238");
+            var menu = Button("Menu", pauseBox.transform, new Vector2(0f, 0f), new Vector2(360f, 60f), "Salir al menú", "#2E3238");
+            Text("SensLabel", Rect("SensLabelRect", pauseBox.transform, Center, Center, new Vector2(0f, -80f), new Vector2(360f, 30f)),
+                22, TextAlignmentOptions.Left, "Sensibilidad del mouse");
+            var slider = Slider("Sensitivity", pauseBox.transform, new Vector2(0f, -120f), new Vector2(360f, 24f));
+            var invert = Toggle("InvertY", pauseBox.transform, new Vector2(0f, -175f), "Invertir eje vertical");
 
-            // Fin.
-            var complete = Panel("Complete", canvas, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero, "#000000", 0.6f);
-            StretchFull(complete.rectTransform);
-            var completeBox = Panel("Box", complete.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(720f, 380f));
-            var completeText = Text("Text", completeBox.transform, 28, TextAlignmentOptions.Top);
-            completeText.margin = new Vector4(30f, 40f, 30f, 120f);
-            var completeRestart = Button("Restart", completeBox.transform, new Vector2(0f, -120f), new Vector2(320f, 64f), "Reiniciar");
+            BuildBriefing(canvas);
+            BuildReport(canvas);
+            BuildFade(canvas);
 
-            var hud = canvasGo.AddComponent<HudView>();
+            var hud = canvas.gameObject.AddComponent<HudView>();
             Set(hud,
-                ("_interactor", interactor), ("_kit", kit),
-                ("_stepTitle", stepTitle), ("_stepBody", stepBody), ("_taskList", tasks),
+                ("_interactor", player.Interactor), ("_kit", player.Kit), ("_look", player.Look), ("_stations", player.Stations),
+                ("_stepPanel", stepPanel.gameObject), ("_stepTitle", stepTitle), ("_stepBody", stepBody), ("_taskList", tasks),
                 ("_prompt", prompt), ("_hint", hint), ("_crosshair", crosshair),
-                ("_kitBar", kitText), ("_toastPanel", toastPanel.gameObject), ("_toastText", toastText),
+                ("_kitBar", kitText), ("_toastPanel", toastPanel.gameObject), ("_toastText", toastText), ("_vignette", vignette),
                 ("_dialoguePanel", dialoguePanel.gameObject), ("_dialogueText", dialogueText),
-                ("_pausePanel", pause.gameObject), ("_resumeButton", resume), ("_restartButton", restart),
-                ("_completePanel", complete.gameObject), ("_completeText", completeText),
-                ("_completeRestartButton", completeRestart));
+                ("_stationPanel", stationPanel.gameObject), ("_stationText", stationText),
+                ("_pausePanel", pause.gameObject), ("_resumeButton", resume), ("_restartButton", restart), ("_menuButton", menu),
+                ("_sensitivitySlider", slider), ("_invertToggle", invert));
+        }
+
+        public static Canvas CreateCanvas(Transform parent, string name, int sortingOrder)
+        {
+            var canvasGo = new GameObject(name, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            canvasGo.transform.SetParent(parent, false);
+            var canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = sortingOrder;
+            var scaler = canvasGo.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+            return canvas;
+        }
+
+        private static void BuildBriefing(Transform canvas)
+        {
+            var root = Panel("Briefing", canvas, Center, Center, Vector2.zero, Vector2.zero, "#0E1013", 0.92f);
+            StretchFull(root.rectTransform);
+
+            Text("Title", Rect("TitleRect", root.transform, Center, Center, new Vector2(0f, 330f), new Vector2(1500f, 80f)),
+                52, TextAlignmentOptions.Center, "<b>Bloqueo y etiquetado · Bomba P-101</b>");
+            var mode = Text("Mode", Rect("ModeRect", root.transform, Center, Center, new Vector2(0f, 262f), new Vector2(1500f, 40f)),
+                24, TextAlignmentOptions.Center);
+
+            Card(root.transform, new Vector2(-500f, 20f), "¿Qué es LOTO?",
+                "Lockout/Tagout es el procedimiento que asegura que un equipo <b>no pueda energizarse</b> mientras alguien lo interviene.\n\n" +
+                "Cada fuente de energía se <b>aísla</b>, se <b>bloquea</b> con un candado personal y se <b>identifica</b> con una etiqueta.");
+            Card(root.transform, new Vector2(0f, 20f), "Tu tarea",
+                "<b>Orden OT-0427:</b> reemplazar el sello mecánico de la bomba centrífuga P-101.\n\n" +
+                "Antes de intervenirla aplicá el procedimiento LOTO completo. Al terminar, restablecé el equipo de forma segura.");
+            Card(root.transform, new Vector2(500f, 20f), "Controles",
+                "<b>WASD</b> moverse · <b>Shift</b> rápido\n<b>Mouse</b> mirar · <b>Click</b> interactuar\n" +
+                "<b>1 · 2 · 3</b> candado, etiqueta, bloqueo\n<b>R</b> / click der. guardar dispositivo\n" +
+                "<b>T</b> mapa de estaciones\n<b>Esc</b> pausa");
+
+            var start = Button("Start", root.transform, new Vector2(0f, -300f), new Vector2(380f, 72f), "<b>Comenzar</b>", "#2D7FF9", 30f);
+            var view = canvas.gameObject.AddComponent<BriefingView>(); // en el canvas: el panel se desactiva
+            Set(view, ("_panel", root.gameObject), ("_modeLabel", mode), ("_startButton", start));
+        }
+
+        private static void Card(Transform parent, Vector2 pos, string title, string body)
+        {
+            var card = Panel($"Card_{title}", parent, Center, Center, pos, new Vector2(460f, 400f), "#1C1F24", 1f);
+            Panel("Accent", card.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(460f, 6f), "#FFC629", 1f);
+            var text = Text("Text", card.transform, 23, TextAlignmentOptions.TopLeft,
+                $"<size=125%><b>{title}</b></size>\n\n{body}");
+            text.margin = new Vector4(28f, 30f, 28f, 24f);
+        }
+
+        private static void BuildReport(Transform canvas)
+        {
+            var root = Panel("Report", canvas, Center, Center, Vector2.zero, Vector2.zero, "#0E1013", 0.94f);
+            StretchFull(root.rectTransform);
+            var box = Panel("Box", root.transform, Center, Center, Vector2.zero, new Vector2(1500f, 900f), "#1C1F24", 1f);
+            Panel("Accent", box.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(1500f, 6f), "#FFC629", 1f);
+
+            var summary = Text("Summary", Rect("SummaryRect", box.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -30f), new Vector2(1400f, 190f)), 30, TextAlignmentOptions.Top);
+            var steps = Text("Steps", Rect("StepsRect", box.transform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(50f, -240f), new Vector2(520f, 520f)), 22, TextAlignmentOptions.TopLeft);
+            var mistakes = Text("Mistakes", Rect("MistakesRect", box.transform, new Vector2(1f, 1f), new Vector2(1f, 1f),
+                new Vector2(-50f, -240f), new Vector2(820f, 520f)), 21, TextAlignmentOptions.TopLeft);
+            mistakes.overflowMode = TextOverflowModes.Ellipsis;
+
+            var retry = Button("Retry", box.transform, new Vector2(-200f, -390f), new Vector2(340f, 64f), "Reintentar");
+            var menu = Button("Menu", box.transform, new Vector2(200f, -390f), new Vector2(340f, 64f), "Menú principal", "#2E3238");
+
+            var view = canvas.gameObject.AddComponent<ReportView>(); // en el canvas: el panel se desactiva
+            Set(view, ("_panel", root.gameObject), ("_summary", summary), ("_steps", steps), ("_mistakes", mistakes),
+                ("_retryButton", retry), ("_menuButton", menu));
+        }
+
+        private static void BuildFade(Transform canvas)
+        {
+            var overlay = Panel("Fade", canvas, Center, Center, Vector2.zero, Vector2.zero, "#000000", 0f);
+            StretchFull(overlay.rectTransform);
+            overlay.transform.SetAsLastSibling();
+            var view = overlay.gameObject.AddComponent<FadeView>();
+            Set(view, ("_overlay", overlay));
         }
 
         private static void StretchFull(RectTransform rect)

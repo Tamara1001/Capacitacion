@@ -25,11 +25,16 @@ namespace LotoSim.Core
                 SetState(GameState.Playing);
         }
 
-        public static void RestartScene()
+        public const string MenuScene = "Menu";
+        public const string TrainingScene = "PumpRoom";
+
+        public static void RestartScene() => LoadScene(SceneManager.GetActiveScene().name);
+
+        public static void LoadScene(string sceneName)
         {
             State = GameState.Playing;
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            SceneManager.LoadScene(sceneName);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

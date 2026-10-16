@@ -34,15 +34,18 @@ namespace LotoSim.Player
         private float _pitch;
         private bool _wasLocked;
         private int _lockRequestFrame = -1;
+        private bool _invertY;
 
-        public float Sensitivity
+        /// <summary>Relee sensibilidad e inversión desde las preferencias guardadas.</summary>
+        public void ReloadSettings()
         {
-            get => _sensitivity;
-            set => _sensitivity = Mathf.Clamp(value, 0.01f, 1f);
+            _sensitivity = Settings.LookSensitivity;
+            _invertY = Settings.InvertY;
         }
 
         private void Awake()
         {
+            ReloadSettings();
             _look = InputSystem.actions.FindAction("Player/Look", true);
             _interact = InputSystem.actions.FindAction("Player/Interact", true);
             _pause = InputSystem.actions.FindAction("Player/Pause", true);
@@ -101,7 +104,8 @@ namespace LotoSim.Player
         private void ApplyLook(Vector2 delta)
         {
             _body.Rotate(Vector3.up, delta.x * _sensitivity, Space.World);
-            _pitch = Mathf.Clamp(_pitch - delta.y * _sensitivity, -_maxPitch, _maxPitch);
+            float vertical = _invertY ? -delta.y : delta.y;
+            _pitch = Mathf.Clamp(_pitch - vertical * _sensitivity, -_maxPitch, _maxPitch);
             _pitchPivot.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
         }
 

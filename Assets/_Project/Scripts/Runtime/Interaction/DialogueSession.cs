@@ -32,8 +32,8 @@ namespace LotoSim.Interaction
             }
             else
             {
+                // El sistema de evaluación explica el error (sólo en modo guiado).
                 Signals.Emit($"dialogue.wrong.{dialogueId}");
-                Toasts.Show(option.Feedback, ToastKind.Warning);
             }
         }
 

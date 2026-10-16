@@ -33,12 +33,14 @@ namespace LotoSim.Devices
         public readonly bool IsEnergized;
         public readonly bool IsRunning;
         public readonly bool IsDepressurized;
+        public readonly bool IsLeaking;
 
-        public PumpStateChanged(bool isEnergized, bool isRunning, bool isDepressurized)
+        public PumpStateChanged(bool isEnergized, bool isRunning, bool isDepressurized, bool isLeaking)
         {
             IsEnergized = isEnergized;
             IsRunning = isRunning;
             IsDepressurized = isDepressurized;
+            IsLeaking = isLeaking;
         }
     }
 }

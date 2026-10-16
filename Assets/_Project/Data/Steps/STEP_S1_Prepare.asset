@@ -49,6 +49,7 @@ MonoBehaviour:
       _item: 0
     _highlightIds:
     - PLATE-V-101
+    - PLATE-V-102
   - _id: S1.bleed
     _description: Identificar la purga V-103
     _conditions:

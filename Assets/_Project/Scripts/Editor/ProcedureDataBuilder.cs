@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using LotoSim.Core;
+using LotoSim.Evaluation;
 using LotoSim.Interaction;
 using LotoSim.Procedure;
 using UnityEditor;
@@ -27,21 +28,22 @@ namespace LotoSim.Editor
         public static ProcedureDefinition Build()
         {
             BuildDialogues();
+            BuildMistakes();
             var steps = new List<StepDefinition>
             {
                 Step("S0_PPE", "S0", "Equipo de protección personal",
                     "Antes de intervenir, equipate en el locker con el EPP adecuado para trabajar sobre equipos con riesgo eléctrico.",
                     false,
-                    Task("S0.helmet", "Colocarse el casco de seguridad", "PPE", C.Flag("ppe.helmet")),
-                    Task("S0.glasses", "Colocarse los anteojos de seguridad", "PPE", C.Flag("ppe.glasses")),
-                    Task("S0.gloves", "Colocarse los guantes dieléctricos", "PPE", C.Flag("ppe.gloves"))),
+                    Task("S0.helmet", "Colocarse el casco de seguridad", "PPE-HELMET", C.Flag("ppe.helmet")),
+                    Task("S0.glasses", "Colocarse los anteojos de seguridad", "PPE-GLASSES", C.Flag("ppe.glasses")),
+                    Task("S0.gloves", "Colocarse los guantes dieléctricos", "PPE-GLOVES", C.Flag("ppe.gloves"))),
 
                 Step("S1_Prepare", "S1", "Preparar la intervención",
                     "Leé la orden de trabajo, identificá cada fuente de energía de la P-101 en su rótulo y tomá el kit LOTO.",
                     false,
                     Task("S1.order", "Leer la orden de trabajo OT-0427", "WORK-ORDER", C.Flag("ot.read")),
                     Task("S1.ds101", "Identificar el seccionador DS-101 en el tablero", "PLATE-DS-101", C.Flag("identify.DS-101")),
-                    Task("S1.valves", "Identificar las válvulas V-101 y V-102", "PLATE-V-101",
+                    Task("S1.valves", "Identificar las válvulas V-101 y V-102", "PLATE-V-101,PLATE-V-102",
                         C.Flag("identify.V-101"), C.Flag("identify.V-102")),
                     Task("S1.bleed", "Identificar la purga V-103", "PLATE-V-103", C.Flag("identify.V-103")),
                     Task("S1.kit", "Tomar el kit LOTO de la estación de bloqueo", "LOTO-STATION", C.Flag(LotoStation.KitCollectedFlag))),
@@ -88,7 +90,7 @@ namespace LotoSim.Editor
                 Step("S7_Restore", "S7", "Finalizar y restablecer",
                     "Dejá el área en orden, avisá al operador, retirá tus bloqueos y restablecé la bomba de forma controlada.",
                     true,
-                    Task("S7.tools", "Recoger las herramientas del área", "TOOLS",
+                    Task("S7.tools", "Recoger las herramientas del área", "TOOL-WRENCH,TOOL-SCREWDRIVER",
                         C.Flag("tool.wrench"), C.Flag("tool.screwdriver")),
                     Task("S7.bleed", "Cerrar la purga V-103", "V-103", C.DeviceIs("V-103", DeviceState.Closed)),
                     Task("S7.notify", "Avisar al operador que se restablece el equipo", "OPERATOR", C.Flag("notify.restore")),
@@ -161,8 +163,69 @@ namespace LotoSim.Editor
             return step;
         }
 
-        private static TaskDefinition Task(string id, string description, string highlightId, params TaskCondition[] conditions) =>
-            new(id, description, conditions, new[] { highlightId });
+        /// <param name="highlightIds">Ids a resaltar separados por coma.</param>
+        private static TaskDefinition Task(string id, string description, string highlightIds, params TaskCondition[] conditions) =>
+            new(id, description, conditions, highlightIds.Split(','));
+
+        public const string MistakeCatalogPath = "Assets/_Project/Data/Mistakes/MISTAKES_P101.asset";
+
+        [MenuItem("LotoSim/Datos/Regenerar catálogo de errores", priority = 21)]
+        public static MistakeCatalog BuildMistakes()
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/_Project/Data/Mistakes"))
+                AssetDatabase.CreateFolder("Assets/_Project/Data", "Mistakes");
+
+            const MistakeSeverity minor = MistakeSeverity.Minor;
+            const MistakeSeverity critical = MistakeSeverity.Critical;
+            var mistakes = new List<MistakeDefinition>
+            {
+                new("PPE_CAP", minor, "EPP inadecuado: gorra",
+                    "Una gorra no protege contra impactos. El casco de seguridad es obligatorio.", "ppe.wrong.cap"),
+                new("PPE_CLOTH_GLOVES", minor, "EPP inadecuado: guantes de tela",
+                    "Los guantes de tela no aíslan. Frente a riesgo eléctrico se usan guantes dieléctricos.", "ppe.wrong.cloth-gloves"),
+                new("PPE_HEADPHONES", minor, "Distracción: auriculares de música",
+                    "Los auriculares impiden escuchar alarmas y avisos. No son elementos de protección.", "ppe.wrong.headphones"),
+                new(MistakeIds.PpeMissing, minor, "Intervención sin EPP completo",
+                    "Antes de intervenir hay que colocarse casco, anteojos de seguridad y guantes dieléctricos."),
+                new("ID_WRONG_DS100", minor, "Fuente mal identificada (DS-100)",
+                    "DS-100 alimenta al compresor C-201, no a la P-101. Verificá siempre el rótulo del equipo.", "identify.wrong.DS-100"),
+                new("ID_WRONG_DS102", minor, "Fuente mal identificada (DS-102)",
+                    "DS-102 alimenta a la ventilación, no a la P-101. Verificá siempre el rótulo del equipo.", "identify.wrong.DS-102"),
+                new("NOTIFY_WRONG", minor, "Comunicación incompleta al operador",
+                    "Hay que avisar qué equipo se interviene, por qué y que quedará fuera de servicio.", $"dialogue.wrong.{DialogueNotifyStop}"),
+                new("NOTIFY_RESTORE_WRONG", minor, "Restablecimiento mal comunicado",
+                    "Quien colocó el bloqueo avisa al personal y restablece el equipo de forma controlada.", $"dialogue.wrong.{DialogueNotifyRestore}"),
+                new(MistakeIds.ValveCloseOrder, minor, "Orden de cierre de válvulas incorrecto",
+                    "Primero se cierra la descarga (V-102) y después la succión (V-101)."),
+                new(MistakeIds.TagWithoutLock, minor, "Etiqueta sin candado",
+                    "La etiqueta sola no impide operar el equipo: primero se coloca el candado y después la etiqueta."),
+                new(MistakeIds.RestoreNoNotify, minor, "Bloqueos retirados sin avisar",
+                    "Antes de retirar los bloqueos hay que avisar al personal afectado que el equipo se va a restablecer."),
+                new(MistakeIds.RestoreValveOrder, minor, "Orden de apertura de válvulas incorrecto",
+                    "Al restablecer se abre primero la succión (V-101) y después la descarga (V-102)."),
+                new(MistakeIds.RestoreTools, minor, "Equipo energizado con herramientas en el área",
+                    "Antes de energizar, el área debe quedar libre de herramientas y materiales."),
+                new(MistakeIds.RestoreBleedOpen, minor, "Equipo energizado con la purga abierta",
+                    "Cerrá la purga V-103 antes de restablecer la energía."),
+
+                new(MistakeIds.SwitchUnderLoad, critical, "Corte del seccionador bajo carga",
+                    "El seccionador no se abre con el equipo en marcha: primero se detiene con su mando normal (STOP)."),
+                new(MistakeIds.Deadhead, critical, "Válvula cerrada con la bomba en marcha",
+                    "Cerrar válvulas con la bomba funcionando la daña y puede romper la línea. Primero detené el equipo."),
+                new(MistakeIds.PressurizedBleed, critical, "Purga abierta con la línea presurizada",
+                    "Se liberó presión sin aislar: con una válvula abierta o la bomba en marcha la purga descarga sin control."),
+                new(MistakeIds.WorkWithoutVerify, critical, "Trabajo sin verificar el aislamiento",
+                    "Nunca se interviene el equipo sin bloquear, liberar la energía y verificar con la prueba de arranque y el manómetro."),
+                new(MistakeIds.LockRemovedEarly, critical, "Bloqueo retirado antes de terminar el trabajo",
+                    "Los candados y bloqueos sólo se retiran cuando el trabajo terminó y el área es segura."),
+            };
+
+            var catalog = LoadOrCreate<MistakeCatalog>(MistakeCatalogPath);
+            catalog.EditorInitialize(mistakes);
+            EditorUtility.SetDirty(catalog);
+            AssetDatabase.SaveAssets();
+            return catalog;
+        }
 
         private static T LoadOrCreate<T>(string path) where T : ScriptableObject
         {

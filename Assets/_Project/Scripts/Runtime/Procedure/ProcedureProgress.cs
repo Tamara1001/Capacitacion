@@ -37,6 +37,21 @@ namespace LotoSim.Procedure
 
         public bool IsTaskDone(int stepIndex, int taskIndex) => _done[stepIndex][taskIndex];
 
+        /// <summary>Busca una tarea por id (ej. "S6.gauge").</summary>
+        public bool IsTaskDone(string taskId)
+        {
+            for (int s = 0; s < _definition.Steps.Count; s++)
+            {
+                var tasks = _definition.Steps[s].Tasks;
+                for (int t = 0; t < tasks.Count; t++)
+                {
+                    if (tasks[t].Id == taskId)
+                        return _done[s][t];
+                }
+            }
+            return false;
+        }
+
         public void Begin()
         {
             if (IsStarted)

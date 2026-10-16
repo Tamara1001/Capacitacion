@@ -30,7 +30,8 @@ MonoBehaviour:
       _state: 0
       _item: 0
     _highlightIds:
-    - TOOLS
+    - TOOL-WRENCH
+    - TOOL-SCREWDRIVER
   - _id: S7.bleed
     _description: Cerrar la purga V-103
     _conditions:

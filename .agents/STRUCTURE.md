@@ -34,7 +34,7 @@ _Project/
 │  ├─ Procedures/    PROC_LOTO_P101.asset
 │  ├─ Steps/         STEP_S0_EPP.asset … STEP_S7_Restore.asset
 │  ├─ Dialogues/     DLG_WorkOrder, DLG_NotifyStop, DLG_NotifyRestore, DLG_OperatorIdle
-│  ├─ Hazards/       HZ_BleedBeforeIsolate.asset …
+│  ├─ Mistakes/      MISTAKES_P101.asset (catálogo de errores)
 ├─ Input/            LotoSim.inputactions (asignado como acciones project-wide)
 ├─ Prefabs/
 │  ├─ Devices/       PF_DisconnectSwitch, PF_LeverValve, PF_BleedValve, PF_Gauge, PF_ControlStation

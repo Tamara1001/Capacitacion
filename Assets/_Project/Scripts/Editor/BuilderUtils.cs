@@ -33,12 +33,38 @@ namespace LotoSim.Editor
             ColorUtility.TryParseHtmlString(hex, out var color);
             material.SetColor("_BaseColor", color);
             material.SetFloat("_Smoothness", smoothness);
-            if (emissive)
+            // Emisión siempre habilitada (negra por defecto) para que la guía pueda pulsarla con MaterialPropertyBlock.
+            material.EnableKeyword("_EMISSION");
+            material.SetColor("_EmissionColor", emissive ? color : Color.black);
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            EditorUtility.SetDirty(material);
+            _materials[name] = material;
+            return material;
+        }
+
+        /// <summary>Material URP Unlit transparente (fantasmas de la guía).</summary>
+        public static Material TransparentMat(string name, string hex, float alpha)
+        {
+            if (_materials.TryGetValue(name, out var cached) && cached != null)
+                return cached;
+            string path = $"{MaterialsFolder}M_GB_{name}.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
             {
-                material.EnableKeyword("_EMISSION");
-                material.SetColor("_EmissionColor", color);
-                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+                AssetDatabase.CreateAsset(material, path);
             }
+            ColorUtility.TryParseHtmlString(hex, out var color);
+            color.a = alpha;
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.SetColor("_BaseColor", color);
             EditorUtility.SetDirty(material);
             _materials[name] = material;
             return material;
@@ -187,12 +213,81 @@ namespace LotoSim.Editor
             return tmp;
         }
 
-        public static Button Button(string name, Transform parent, Vector2 pos, Vector2 size, string label)
+        public static Button Button(string name, Transform parent, Vector2 pos, Vector2 size, string label,
+            string hex = "#2D7FF9", float fontSize = 26f)
         {
-            var image = Panel(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, size, "#2D7FF9", 1f);
+            var image = Panel(name, parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, size, hex, 1f);
             var button = image.gameObject.AddComponent<Button>();
-            Text("Label", image.transform, 26, TextAlignmentOptions.Center, label);
+            var colors = button.colors;
+            colors.highlightedColor = new Color(0.85f, 0.85f, 0.85f);
+            colors.pressedColor = new Color(0.7f, 0.7f, 0.7f);
+            button.colors = colors;
+            Text("Label", image.transform, fontSize, TextAlignmentOptions.Center, label);
             return button;
+        }
+
+        public static Slider Slider(string name, Transform parent, Vector2 pos, Vector2 size)
+        {
+            var go = DefaultControls.CreateSlider(new DefaultControls.Resources());
+            go.name = name;
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = pos;
+            rect.sizeDelta = size;
+            TintChild(go.transform, "Background", "#2E3238");
+            TintChild(go.transform, "Fill Area/Fill", "#FFC629");
+            TintChild(go.transform, "Handle Slide Area/Handle", "#FFFFFF");
+            return go.GetComponent<Slider>();
+        }
+
+        public static Toggle Toggle(string name, Transform parent, Vector2 pos, string label)
+        {
+            var go = DefaultControls.CreateToggle(new DefaultControls.Resources());
+            go.name = name;
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = pos;
+            rect.sizeDelta = new Vector2(360f, 36f);
+            var background = (RectTransform)go.transform.Find("Background");
+            background.sizeDelta = new Vector2(28f, 28f);
+            TintChild(go.transform, "Background/Checkmark", "#FFC629");
+            Object.DestroyImmediate(go.transform.Find("Label").gameObject);
+            var text = Text("Label", go.transform, 22, TextAlignmentOptions.Left, label);
+            text.rectTransform.offsetMin = new Vector2(40f, 0f);
+            return go.GetComponent<Toggle>();
+        }
+
+        public static TMP_InputField InputField(string name, Transform parent, Vector2 pos, Vector2 size, string placeholder)
+        {
+            var go = TMP_DefaultControls.CreateInputField(new TMP_DefaultControls.Resources());
+            go.name = name;
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = pos;
+            rect.sizeDelta = size;
+            ColorUtility.TryParseHtmlString("#2E3238", out var bg);
+            go.GetComponent<Image>().color = bg;
+            var input = go.GetComponent<TMP_InputField>();
+            input.characterLimit = 32;
+            input.textComponent.fontSize = 24;
+            input.textComponent.color = Color.white;
+            var placeholderText = (TextMeshProUGUI)input.placeholder;
+            placeholderText.text = placeholder;
+            placeholderText.fontSize = 24;
+            placeholderText.color = new Color(1f, 1f, 1f, 0.4f);
+            return input;
+        }
+
+        private static void TintChild(Transform root, string path, string hex)
+        {
+            var child = root.Find(path);
+            if (child == null || !child.TryGetComponent<Image>(out var image))
+                return;
+            ColorUtility.TryParseHtmlString(hex, out var color);
+            image.color = color;
         }
     }
 }

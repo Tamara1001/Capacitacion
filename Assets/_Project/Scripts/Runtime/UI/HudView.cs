@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Text;
 using LotoSim.Core;
 using LotoSim.Interaction;
+using LotoSim.Player;
 using LotoSim.Procedure;
 using TMPro;
 using UnityEngine;
@@ -9,15 +11,16 @@ using UnityEngine.UI;
 namespace LotoSim.UI
 {
     /// <summary>
-    /// HUD de escritorio (greybox): paso actual y tareas, prompt de interacción, kit, avisos,
-    /// diálogo, pausa y fin. Sólo lee estado y escucha eventos.
+    /// HUD de escritorio: paso actual y tareas, prompt de interacción, kit, avisos, diálogo,
+    /// mapa de estaciones y pausa con opciones. Sólo lee estado y escucha eventos.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class HudView : MonoBehaviour
     {
-        private const string DoneColor = "#3BB273";
-        private const string PendingColor = "#C9CDD2";
-        private const string GuideColor = "#FFC629";
+        public const string DoneColor = "#3BB273";
+        public const string PendingColor = "#C9CDD2";
+        public const string GuideColor = "#FFC629";
+        public const string ErrorColor = "#E5484D";
 
         [Header("Referencias de juego")]
         [SerializeField]
@@ -26,7 +29,16 @@ namespace LotoSim.UI
         [SerializeField]
         private LotoKit _kit;
 
+        [SerializeField]
+        private DesktopLook _look;
+
+        [SerializeField]
+        private StationTeleport _stations;
+
         [Header("Paso")]
+        [SerializeField]
+        private GameObject _stepPanel;
+
         [SerializeField]
         private TMP_Text _stepTitle;
 
@@ -46,7 +58,7 @@ namespace LotoSim.UI
         [SerializeField]
         private Graphic _crosshair;
 
-        [Header("Kit y avisos")]
+        [Header("Kit, avisos y efectos")]
         [SerializeField]
         private TMP_Text _kitBar;
 
@@ -57,7 +69,7 @@ namespace LotoSim.UI
         private TMP_Text _toastText;
 
         [SerializeField]
-        private float _toastSeconds = 3.5f;
+        private Image _vignette;
 
         [Header("Paneles")]
         [SerializeField]
@@ -66,6 +78,13 @@ namespace LotoSim.UI
         [SerializeField]
         private TMP_Text _dialogueText;
 
+        [SerializeField]
+        private GameObject _stationPanel;
+
+        [SerializeField]
+        private TMP_Text _stationText;
+
+        [Header("Pausa y opciones")]
         [SerializeField]
         private GameObject _pausePanel;
 
@@ -76,36 +95,48 @@ namespace LotoSim.UI
         private Button _restartButton;
 
         [SerializeField]
-        private GameObject _completePanel;
+        private Button _menuButton;
 
         [SerializeField]
-        private TMP_Text _completeText;
+        private Slider _sensitivitySlider;
 
         [SerializeField]
-        private Button _completeRestartButton;
+        private Toggle _invertToggle;
+
+        private const int MaxToasts = 3;
 
         private readonly StringBuilder _builder = new();
-        private float _toastHideTime;
+        private readonly List<(string text, float expires)> _toasts = new();
+        private float _vignetteAlpha;
 
         private void Awake()
         {
             _resumeButton.onClick.AddListener(Resume);
             _restartButton.onClick.AddListener(GameFlow.RestartScene);
-            _completeRestartButton.onClick.AddListener(GameFlow.RestartScene);
+            _menuButton.onClick.AddListener(() => GameFlow.LoadScene(GameFlow.MenuScene));
+
+            _sensitivitySlider.minValue = 0.02f;
+            _sensitivitySlider.maxValue = 0.5f;
+            _sensitivitySlider.SetValueWithoutNotify(Settings.LookSensitivity);
+            _sensitivitySlider.onValueChanged.AddListener(OnSensitivityChanged);
+            _invertToggle.SetIsOnWithoutNotify(Settings.InvertY);
+            _invertToggle.onValueChanged.AddListener(OnInvertChanged);
+
             _toastPanel.SetActive(false);
             _dialoguePanel.SetActive(false);
+            _stationPanel.SetActive(false);
             _pausePanel.SetActive(false);
-            _completePanel.SetActive(false);
+            SetVignette(0f);
         }
 
         private void OnEnable()
         {
             SimEvents.Subscribe<StepStarted>(OnStepStarted);
             SimEvents.Subscribe<TaskCompleted>(OnTaskCompleted);
-            SimEvents.Subscribe<ProcedureCompleted>(OnProcedureCompleted);
             SimEvents.Subscribe<ToastRequested>(OnToast);
             SimEvents.Subscribe<GameStateChanged>(OnGameStateChanged);
             DialogueSession.Changed += RefreshDialogue;
+            StationTeleport.MenuChanged += RefreshStations;
             if (_kit != null)
                 _kit.Changed += RefreshKit;
             RefreshKit();
@@ -115,10 +146,10 @@ namespace LotoSim.UI
         {
             SimEvents.Unsubscribe<StepStarted>(OnStepStarted);
             SimEvents.Unsubscribe<TaskCompleted>(OnTaskCompleted);
-            SimEvents.Unsubscribe<ProcedureCompleted>(OnProcedureCompleted);
             SimEvents.Unsubscribe<ToastRequested>(OnToast);
             SimEvents.Unsubscribe<GameStateChanged>(OnGameStateChanged);
             DialogueSession.Changed -= RefreshDialogue;
+            StationTeleport.MenuChanged -= RefreshStations;
             if (_kit != null)
                 _kit.Changed -= RefreshKit;
         }
@@ -126,20 +157,23 @@ namespace LotoSim.UI
         private void Update()
         {
             RefreshPrompt();
-            if (_toastPanel.activeSelf && Time.unscaledTime >= _toastHideTime)
-                _toastPanel.SetActive(false);
+            if (_toasts.RemoveAll(t => Time.unscaledTime >= t.expires) > 0)
+                RefreshToasts();
+            if (_vignetteAlpha > 0f)
+                SetVignette(Mathf.MoveTowards(_vignetteAlpha, 0f, Time.unscaledDeltaTime * 0.25f));
         }
 
         private void RefreshPrompt()
         {
             bool playing = GameFlow.State == GameState.Playing;
-            bool locked = CursorControl.HasControl;
+            bool hasControl = CursorControl.HasControl;
+            bool modal = DialogueSession.IsOpen || OverlayMenu.IsOpen;
 
-            _hint.gameObject.SetActive(playing && !locked);
-            _crosshair.enabled = playing && locked && !DialogueSession.IsOpen;
+            _hint.gameObject.SetActive(playing && !hasControl);
+            _crosshair.enabled = playing && hasControl && !modal;
 
             var prompt = _interactor != null ? _interactor.Prompt : null;
-            if (!playing || !locked || string.IsNullOrEmpty(prompt))
+            if (!playing || !hasControl || string.IsNullOrEmpty(prompt))
             {
                 _prompt.text = string.Empty;
                 return;
@@ -162,9 +196,16 @@ namespace LotoSim.UI
             int index = progress.CurrentStepIndex;
             int last = progress.StepCount - 1;
             string number = index == 0 ? "PREVIO" : $"PASO {index} DE {last}";
-            _stepTitle.text = $"<size=70%><color={GuideColor}>{number}</color></size>\n{step.Title}";
-            _stepBody.text = SessionContext.IsGuided ? step.Description : string.Empty;
+            string mode = SessionContext.IsGuided ? string.Empty : $"   <color={PendingColor}>· MODO EVALUACIÓN</color>";
+            _stepTitle.text = $"<size=70%><color={GuideColor}>{number}</color>{mode}</size>\n{step.Title}";
 
+            bool guided = SessionContext.IsGuided;
+            _stepBody.gameObject.SetActive(guided);
+            _taskList.gameObject.SetActive(guided);
+            if (!guided)
+                return;
+
+            _stepBody.text = step.Description;
             _builder.Clear();
             for (int t = 0; t < step.Tasks.Count; t++)
             {
@@ -173,19 +214,19 @@ namespace LotoSim.UI
                     .Append(step.Tasks[t].Description)
                     .Append("</color>\n");
             }
-            _taskList.text = _builder.ToString();
+            _taskList.text = _builder.ToString().TrimEnd('\n');
         }
 
         private void RefreshKit()
         {
             if (_kit == null || !_kit.IsCollected)
             {
-                _kitBar.text = "Kit LOTO: no lo tenés (está en la estación de bloqueo)";
+                _kitBar.text = $"Kit LOTO: está en la estación de bloqueo     <color={PendingColor}>T: mapa de estaciones  ·  Esc: pausa</color>";
                 return;
             }
             _kitBar.text =
-                $"{Slot(1, LotoItemType.Padlock)}     {Slot(2, LotoItemType.Tag)}     {Slot(3, LotoItemType.ValveLockout)}" +
-                $"     <color={PendingColor}>Llave: sí  ·  R / click der.: guardar</color>";
+                $"{Slot(1, LotoItemType.Padlock)}    {Slot(2, LotoItemType.Tag)}    {Slot(3, LotoItemType.ValveLockout)}" +
+                $"    <color={PendingColor}>Llave: sí  ·  R: guardar  ·  T: mapa</color>";
         }
 
         private string Slot(int key, LotoItemType type)
@@ -211,6 +252,19 @@ namespace LotoSim.UI
             _dialogueText.text = _builder.ToString();
         }
 
+        private void RefreshStations()
+        {
+            _stationPanel.SetActive(OverlayMenu.IsOpen);
+            if (!OverlayMenu.IsOpen || _stations == null)
+                return;
+            _builder.Clear();
+            _builder.Append($"<b><color={GuideColor}>Ir a…</color></b>\n\n");
+            for (int i = 0; i < _stations.Stations.Count; i++)
+                _builder.Append($"<b>[{i + 1}]</b>  {_stations.Stations[i].Name}\n");
+            _builder.Append($"\n<size=80%><color={PendingColor}>T para cerrar</color></size>");
+            _stationText.text = _builder.ToString();
+        }
+
         private void OnStepStarted(StepStarted evt) => RefreshSteps();
 
         private void OnTaskCompleted(TaskCompleted evt) => RefreshSteps();
@@ -221,29 +275,66 @@ namespace LotoSim.UI
             {
                 ToastKind.Success => DoneColor,
                 ToastKind.Warning => GuideColor,
-                ToastKind.Error => "#E5484D",
+                ToastKind.Error => ErrorColor,
                 _ => "#FFFFFF"
             };
-            _toastText.text = $"<color={color}>{evt.Message}</color>";
-            _toastPanel.SetActive(true);
-            _toastHideTime = Time.unscaledTime + _toastSeconds;
+            // Más tiempo para mensajes largos (explicaciones de errores). El más nuevo va arriba.
+            float duration = Mathf.Clamp(2.5f + evt.Message.Length * 0.04f, 3f, 9f);
+            _toasts.Insert(0, ($"<color={color}>{evt.Message}</color>", Time.unscaledTime + duration));
+            if (_toasts.Count > MaxToasts)
+                _toasts.RemoveAt(_toasts.Count - 1);
+            RefreshToasts();
+            if (evt.Kind == ToastKind.Error)
+                SetVignette(0.2f);
+        }
+
+        private void RefreshToasts()
+        {
+            _toastPanel.SetActive(_toasts.Count > 0);
+            _builder.Clear();
+            for (int i = 0; i < _toasts.Count; i++)
+            {
+                if (i > 0)
+                    _builder.Append("\n\n");
+                _builder.Append(_toasts[i].text);
+            }
+            _toastText.text = _builder.ToString();
         }
 
         private void OnGameStateChanged(GameStateChanged evt)
         {
             _pausePanel.SetActive(evt.State == GameState.Paused);
-            if (evt.State != GameState.Completed)
-                _completePanel.SetActive(false);
+            _stepPanel.SetActive(evt.State != GameState.Completed);
+            _kitBar.transform.parent.gameObject.SetActive(evt.State is GameState.Playing or GameState.Paused);
+            if (evt.State == GameState.Completed)
+            {
+                _toasts.Clear();
+                RefreshToasts();
+            }
+            RefreshSteps();
         }
 
-        private void OnProcedureCompleted(ProcedureCompleted evt)
+        private void SetVignette(float alpha)
         {
-            int minutes = Mathf.FloorToInt(evt.ElapsedSeconds / 60f);
-            int seconds = Mathf.FloorToInt(evt.ElapsedSeconds % 60f);
-            _completeText.text =
-                $"<size=130%><b>Procedimiento completado</b></size>\n\n" +
-                $"La bomba P-101 volvió a operar de forma controlada.\nTiempo total: {minutes:00}:{seconds:00}";
-            _completePanel.SetActive(true);
+            _vignetteAlpha = alpha;
+            var color = _vignette.color;
+            color.a = alpha;
+            _vignette.color = color;
+            _vignette.enabled = alpha > 0.001f;
+        }
+
+        private void OnSensitivityChanged(float value)
+        {
+            Settings.LookSensitivity = value;
+            if (_look != null)
+                _look.ReloadSettings();
+        }
+
+        private void OnInvertChanged(bool value)
+        {
+            Settings.InvertY = value;
+            if (_look != null)
+                _look.ReloadSettings();
         }
 
         private static void Resume()

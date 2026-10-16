@@ -34,6 +34,13 @@ namespace LotoSim.Core
     {
         Playing = 0,
         Paused = 1,
-        Completed = 2
+        Completed = 2,
+        Briefing = 3
+    }
+
+    public enum MistakeSeverity
+    {
+        Minor = 0,
+        Critical = 1
     }
 }

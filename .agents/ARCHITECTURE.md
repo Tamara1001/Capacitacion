@@ -60,21 +60,25 @@ Objetivo: lógica de capacitación **desacoplada** del input y de la presentaci�
 - Las condiciones referencian dispositivos por **`DeviceId` string**, no por referencia de escena (los SO no pueden apuntar a objetos de escena). `DeviceRegistry` resuelve el id.
 
 ### Evaluation
-- `AssessmentTracker`: acumula `MistakeRecord {stepId, severity, ruleId, message, time}`, tiempo y orden. Calcula puntaje (reglas en PROCEDURE.md).
-- `SessionReport`: DTO inmutable para la pantalla de reporte.
+- `MistakeCatalog` (SO, `Data/Mistakes/MISTAKES_P101`): id, severidad, título y explicación de cada error. Si un error tiene `TriggerSignal`, se detecta solo al emitirse esa señal (EPP equivocado, rótulo equivocado, mensaje incorrecto al operador).
+- `HazardMonitor`: reglas por código que dependen del estado (corte bajo carga, válvula cerrada en marcha, purga presurizada, trabajo sin verificar, bloqueo retirado antes de tiempo, orden de válvulas, etiqueta sin candado, restablecimiento sin avisar, etc.). Corre en los handlers de eventos, antes del `LateUpdate` de la bomba.
+- `AssessmentTracker`: registra cada tipo de error **una sola vez** (`MistakeRecord`), publica `MistakeMade` y, al completar el procedimiento, arma el `SessionReport` y publica `ReportReady`.
+- `SessionReport` (C# puro, testeado): puntaje 100 − 5 por menor − 20 por crítico (mín. 0); aprobado con ≥ 70 y sin críticos.
 
 ### Guidance
-- `GuidanceController`: en modo guiado, resalta objetivos de la tarea actual (`Highlighter` con outline), activa ghosts de sockets y muestra avisos de error. En modo evaluación sólo reproduce sonido de error.
+- `HighlightTarget`: objeto resaltable; sin ids configurados su id es el nombre del GameObject (`DS-101`, `PPE-HELMET`…). Resalta con un pulso de `_EmissionColor` vía `MaterialPropertyBlock` (los materiales greybox tienen emisión habilitada en negro).
+- `GuidanceController` (sólo modo guiado): resalta los `HighlightIds` de las tareas pendientes (en pasos ordenados, sólo la siguiente) con pulso + marcador flotante; muestra fantasmas (`LotoSocket.ShowGhost`) donde se puede colocar el ítem en mano; convierte `MistakeMade` en avisos con explicación. En modo evaluación no muestra nada de esto.
 
 ### Player
 - `FirstPersonMotor` (CharacterController, WASD, Shift para caminar rápido, sin salto).
-- `StationTeleport`: lista de `StationPoint` (Locker, Estación LOTO, Tablero, Bomba, Operador); menú `T` para saltar con fade.
+- `StationTeleport`: 5 estaciones (Locker, Estación LOTO, Tablero, Bomba, Operador); `T` abre el mapa y 1–5 saltan con fundido (`ScreenFade`). Mientras el mapa está abierto `OverlayMenu.IsOpen` bloquea el interactor.
 - `DesktopLook` + `CursorControl`: mouse look con pointer lock (WebGL requiere click para capturar el cursor). Si el navegador no permite el lock (iframes restringidos, vistas embebidas), pasa a un modo de respaldo: la cámara sigue al mouse sin capturarlo y se puede mover e interactuar igual.
 
 ### UI
-- `TabletView` (world-space uGUI, sostenida/abierta con `Tab`): checklist de pasos, tarjeta de LOTO, OT.
-- `HudView` (screen-space): crosshair, prompt de interacción, paso actual compacto, barra del kit, toasts.
-- `MenuView`, `BriefingView`, `PauseView`, `ReportView`, `DialogueView` (opciones del operador).
+- `HudView` (screen-space): paso actual y tareas, crosshair, prompt, barra del kit, avisos apilados (hasta 3), viñeta de error, diálogo, mapa de estaciones, pausa con opciones.
+- `BriefingView` (estado `Briefing` al entrar), `ReportView` (escucha `ReportReady`), `FadeView` (implementa `ScreenFade`), `MenuController` (escena Menu).
+- Regla: un componente que escucha eventos **no** puede vivir en el panel que él mismo desactiva (vive en el canvas).
+- `TabletView` (world-space, `Tab`): **M3**.
 - Las vistas **sólo leen** estado y escuchan eventos; las acciones pasan por métodos de servicios.
 
 ### Audio

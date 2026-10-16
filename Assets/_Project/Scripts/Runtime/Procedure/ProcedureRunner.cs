@@ -19,12 +19,13 @@ namespace LotoSim.Procedure
         private PumpSystem _pump;
 
         private ProcedureProgress _progress;
-        private float _startTime;
+        private float _startTime = -1f;
 
         public ProcedureDefinition Procedure => _procedure;
         public ProcedureProgress Progress => _progress;
         public StepDefinition CurrentStep => _progress?.CurrentStep;
-        public float ElapsedSeconds => Time.time - _startTime;
+        /// <summary>Tiempo de juego desde que terminó el briefing (no cuenta pausas).</summary>
+        public float ElapsedSeconds => _startTime < 0f ? 0f : Time.time - _startTime;
 
         public bool IsPumpRunning => _pump.IsRunning;
         public bool IsPumpDepressurized => _pump.IsDepressurized;
@@ -48,13 +49,19 @@ namespace LotoSim.Procedure
             SimEvents.Subscribe<PumpStateChanged>(OnPumpStateChanged);
             SimEvents.Subscribe<FlagRaised>(OnFlagRaised);
             SimEvents.Subscribe<ActionSignal>(OnActionSignal);
+            SimEvents.Subscribe<GameStateChanged>(OnGameStateChanged);
         }
 
         private void Start()
         {
-            _startTime = Time.time;
-            GameFlow.SetState(GameState.Playing);
+            GameFlow.SetState(GameState.Briefing);
             _progress.Begin();
+        }
+
+        private void OnGameStateChanged(GameStateChanged evt)
+        {
+            if (evt.State == GameState.Playing && _startTime < 0f)
+                _startTime = Time.time;
         }
 
         private void OnDisable()
@@ -64,6 +71,7 @@ namespace LotoSim.Procedure
             SimEvents.Unsubscribe<PumpStateChanged>(OnPumpStateChanged);
             SimEvents.Unsubscribe<FlagRaised>(OnFlagRaised);
             SimEvents.Unsubscribe<ActionSignal>(OnActionSignal);
+            SimEvents.Unsubscribe<GameStateChanged>(OnGameStateChanged);
         }
 
         private void OnDestroy()

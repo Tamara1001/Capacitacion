@@ -72,6 +72,11 @@ namespace LotoSim.Interaction
                 HandleDialogueInput();
                 return;
             }
+            if (OverlayMenu.IsOpen)
+            {
+                ClearTarget();
+                return;
+            }
 
             HandleKitInput();
             UpdateTarget();
