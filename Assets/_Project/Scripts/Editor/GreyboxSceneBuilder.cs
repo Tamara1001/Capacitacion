@@ -506,13 +506,28 @@ namespace LotoSim.Editor
         {
             var group = Empty("P-101_Group", parent, Vector3.zero).transform;
 
-            FitCollider(Model("PumpSkid", group, new Vector3(1f, 0f, 1f)));
+            // El skid es una sola malla (base + motor + soporte): un collider envolvente tapaba la purga V-103
+            // y los rótulos. Se usan dos cajas: la base baja y el motor (la carcasa tiene su propio collider).
+            var skid = Model("PumpSkid", group, new Vector3(1f, 0f, 1f));
+            var baseBox = skid.AddComponent<BoxCollider>();
+            baseBox.center = new Vector3(0.04f, 0.09f, 0f);
+            baseBox.size = new Vector3(2.7f, 0.2f, 0.92f);
+            var motorBox = skid.AddComponent<BoxCollider>();
+            motorBox.center = new Vector3(0.785f, 0.56f, 0.065f);
+            motorBox.size = new Vector3(1.19f, 0.82f, 0.67f);
             var coupling = Model("Coupling", group, new Vector3(1.22f, 0.6f, 1f));
             Label("P-101", group, new Vector3(1.8f, 1.25f, 1f), Vector3.zero, 1.6f, "#2E3238");
 
             // Carcasa: dispara el mantenimiento.
             var casing = Model("PumpCasing", group, new Vector3(0.6f, 0.6f, 1f), Vector3.zero, "P-101");
-            FitCollider(casing);
+            // Se recorta la parte baja del collider: la purga V-103 queda debajo de la carcasa y,
+            // apuntando desde arriba, la carcasa la tapaba.
+            var casingBox = FitCollider(casing);
+            float casingBottom = casingBox.center.y - casingBox.size.y / 2f;
+            float casingTop = casingBox.center.y + casingBox.size.y / 2f;
+            casingBottom = Mathf.Max(casingBottom, -0.1f);
+            casingBox.center = new Vector3(casingBox.center.x, (casingBottom + casingTop) / 2f, casingBox.center.z);
+            casingBox.size = new Vector3(casingBox.size.x, casingTop - casingBottom, casingBox.size.z);
 
             // Succión (V-101) hacia el oeste y luego al techo.
             Cylinder("SuctionPipe", group, new Vector3(-0.96f, 0.6f, 1f), new Vector3(0f, 0f, 90f), new Vector3(0.16f, 1.24f, 0.16f), PipeGreen);
