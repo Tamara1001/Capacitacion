@@ -15,7 +15,7 @@ MonoBehaviour:
   _id: S1
   _title: "Preparar la intervenci\xF3n"
   _description: "Le\xE9 la orden de trabajo, identific\xE1 cada fuente de energ\xEDa
-    de la P-101 en su r\xF3tulo y tom\xE1 el kit LOTO."
+    de la P-101 haciendo click en su r\xF3tulo blanco, y tom\xE1 el kit LOTO."
   _ordered: 0
   _tasks:
   - _id: S1.order

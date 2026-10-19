@@ -298,6 +298,9 @@ namespace LotoSim.Editor
             Box("Wall_S_A", room, new Vector3(-5.6f, 2f, -4.6f), new Vector3(1.2f, 4f, 0.2f), Wall);
             Box("Wall_S_B", room, new Vector3(1.6f, 2f, -4.6f), new Vector3(9.2f, 4f, 0.2f), Wall);
             Box("Wall_S_Lintel", room, new Vector3(-4f, 3.25f, -4.6f), new Vector3(2f, 1.5f, 0.2f), Wall);
+            // Puerta cerrada: sin ella el vano da al vacío y se puede caer.
+            Box("Door_S", room, new Vector3(-4f, 1.25f, -4.55f), new Vector3(2f, 2.5f, 0.1f), Graphite);
+            Label("SALIDA", room, new Vector3(-4f, 2.25f, -4.495f), new Vector3(0f, 180f, 0f), 0.6f, "#3BB273", 1.2f);
             var ceiling = Box("Ceiling", room, new Vector3(0f, 4.05f, 0f), new Vector3(12.4f, 0.1f, 9.4f), Wall, false);
             ceiling.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
             // Zócalo oscuro para dar lectura a la base de las paredes.
@@ -407,7 +410,8 @@ namespace LotoSim.Editor
             Label("LOTO · Candado + etiqueta por persona", t, new Vector3(0f, 0.395f, -0.022f), Vector3.zero, 0.6f, "#D3272E", 1.2f);
             FitCollider(station);
 
-            var order = Empty("WORK-ORDER", parent, new Vector3(-5.97f, 1.4f, 0.4f));
+            // Lejos de la estación de bloqueo para no confundir "leer la OT" con "tomar el kit".
+            var order = Empty("WORK-ORDER", parent, new Vector3(-5.97f, 1.4f, -1.2f));
             Box("Clipboard", order.transform, Vector3.zero, new Vector3(0.02f, 0.34f, 0.25f), Graphite);
             Box("Sheet", order.transform, new Vector3(0.012f, -0.01f, 0f), new Vector3(0.004f, 0.3f, 0.22f), White, false);
             Label("ORDEN DE TRABAJO\nOT-0427", order.transform, new Vector3(0.016f, 0.08f, 0f), new Vector3(0f, -90f, 0f), 0.22f, PlateText, 0.22f);
@@ -470,8 +474,13 @@ namespace LotoSim.Editor
             string flag, string wrongSignal, string toast)
         {
             var plate = Empty(id, parent, pos, euler);
-            Box("Plate", plate.transform, Vector3.zero, new Vector3(0.42f, 0.14f, 0.015f), White);
+            Box("Plate", plate.transform, Vector3.zero, new Vector3(0.42f, 0.14f, 0.015f), White, false);
             Label(text, plate.transform, new Vector3(0f, 0f, -0.01f), Vector3.zero, 0.34f, PlateText, 0.42f);
+            // Collider profundo hacia el jugador: sobresale de los colliders vecinos (tablero, skid)
+            // que si no taparían el rótulo al apuntar.
+            var hitBox = plate.AddComponent<BoxCollider>();
+            hitBox.size = new Vector3(0.42f, 0.14f, 0.15f);
+            hitBox.center = new Vector3(0f, 0f, -0.065f);
             var interactable = plate.AddComponent<SignalInteractable>();
             Set(interactable,
                 ("_prompt", $"Identificar fuente: {text.Replace('\n', ' ')}"),
@@ -511,7 +520,7 @@ namespace LotoSim.Editor
             Cylinder("SuctionRiser", group, new Vector3(-2.2f, 2.3f, 1f), Vector3.zero, new Vector3(0.16f, 1.7f, 0.16f), PipeGreen);
             Model("Flange", group, new Vector3(-2.2f, 1.6f, 1f));
             var suction = BallValve(group, "V-101", "la válvula de succión V-101", new Vector3(-0.6f, 0.6f, 1f), Quaternion.identity);
-            IdPlate(group, "PLATE-V-101", new Vector3(-0.6f, 0.3f, 0.84f), Vector3.zero, "V-101\nSucción",
+            IdPlate(group, "PLATE-V-101", new Vector3(-0.85f, 0.25f, 0.7f), Vector3.zero, "V-101\nSucción",
                 "identify.V-101", null, "Fuente identificada: válvula de succión V-101 (hidráulica).");
 
             // Descarga (V-102) vertical hacia el techo: el cuerpo se gira para que la cañería quede vertical
@@ -520,7 +529,7 @@ namespace LotoSim.Editor
             Model("Flange", group, new Vector3(0.6f, 2.6f, 1f), new Vector3(90f, 0f, 0f));
             var dischargeRotation = Quaternion.LookRotation(Vector3.left, Vector3.back);
             var discharge = BallValve(group, "V-102", "la válvula de descarga V-102", new Vector3(0.6f, 1.5f, 1f), dischargeRotation);
-            IdPlate(group, "PLATE-V-102", new Vector3(0.6f, 1.78f, 0.9f), Vector3.zero, "V-102\nDescarga",
+            IdPlate(group, "PLATE-V-102", new Vector3(1.15f, 1.55f, 0.85f), Vector3.zero, "V-102\nDescarga",
                 "identify.V-102", null, "Fuente identificada: válvula de descarga V-102 (hidráulica).");
 
             // Manómetro PI-101.
@@ -544,7 +553,7 @@ namespace LotoSim.Editor
                 ("_inactiveEuler", new Vector3(90f, 0f, 0f)),
                 ("_startsActive", false));
             FitCollider(Model("Bucket", group, new Vector3(0.6f, 0f, 0.55f)));
-            IdPlate(group, "PLATE-V-103", new Vector3(1.0f, 0.3f, 0.7f), Vector3.zero, "V-103\nPurga",
+            IdPlate(group, "PLATE-V-103", new Vector3(1.05f, 0.6f, 0.5f), Vector3.zero, "V-103\nPurga",
                 "identify.V-103", null, "Fuente identificada: purga V-103 (presión residual).");
 
             // Botonera local CS-101.
@@ -627,7 +636,10 @@ namespace LotoSim.Editor
         {
             var root = Model("PushButton", parent, pos, Vector3.zero, isStart ? "StartButton" : "StopButton");
             Recolor(root, mat);
-            FitCollider(root, 0.02f);
+            // Collider profundo hacia el jugador: el de la botonera (con la tapa saliente) los taparía.
+            var hitBox = root.AddComponent<BoxCollider>();
+            hitBox.size = new Vector3(0.12f, 0.12f, 0.3f);
+            hitBox.center = new Vector3(0f, 0f, -0.1f);
             Label(text, parent, new Vector3(pos.x, 1.225f, -0.086f), Vector3.zero, 0.13f, "#1C1F24", 0.07f);
             var button = root.AddComponent<ControlButton>();
             Set(button, ("_station", station), ("_isStart", isStart));

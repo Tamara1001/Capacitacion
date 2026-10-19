@@ -39,7 +39,7 @@ namespace LotoSim.Editor
                     Task("S0.gloves", "Colocarse los guantes dieléctricos", "PPE-GLOVES", C.Flag("ppe.gloves"))),
 
                 Step("S1_Prepare", "S1", "Preparar la intervención",
-                    "Leé la orden de trabajo, identificá cada fuente de energía de la P-101 en su rótulo y tomá el kit LOTO.",
+                    "Leé la orden de trabajo, identificá cada fuente de energía de la P-101 haciendo click en su rótulo blanco, y tomá el kit LOTO.",
                     false,
                     Task("S1.order", "Leer la orden de trabajo OT-0427", "WORK-ORDER", C.Flag("ot.read")),
                     Task("S1.ds101", "Identificar el seccionador DS-101 en el tablero", "PLATE-DS-101", C.Flag("identify.DS-101")),

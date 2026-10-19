@@ -18,7 +18,7 @@ namespace LotoSim.Interaction
                 return false;
             if (!kit.IsCollected)
                 return true;
-            return Signals.HasFlag(MaintenanceDoneFlag) && kit.IsComplete;
+            return kit.IsComplete;
         }
 
         public string GetPrompt(IInteractor interactor)
@@ -28,11 +28,9 @@ namespace LotoSim.Interaction
                 return "Kit LOTO guardado";
             if (!kit.IsCollected)
                 return "Tomar el kit LOTO";
-            if (!Signals.HasFlag(MaintenanceDoneFlag))
-                return "Kit LOTO en uso";
-            return kit.IsComplete
-                ? "Devolver el kit LOTO"
-                : "Retirá todos los dispositivos antes de devolver el kit";
+            if (!kit.IsComplete)
+                return "Retirá todos los dispositivos antes de devolver el kit";
+            return Signals.HasFlag(MaintenanceDoneFlag) ? "Devolver el kit LOTO" : "Dejar el kit LOTO (todavía no lo usaste)";
         }
 
         public void Interact(IInteractor interactor)
@@ -46,6 +44,12 @@ namespace LotoSim.Interaction
                 return;
             }
             kit.Stow();
+            // Dejar el kit antes de terminar el trabajo no cierra el procedimiento: se puede volver a tomar.
+            if (!Signals.HasFlag(MaintenanceDoneFlag))
+            {
+                Toasts.Show("Dejaste el kit en la estación. Podés volver a tomarlo cuando lo necesites.", ToastKind.Warning);
+                return;
+            }
             Signals.RaiseFlag(KitReturnedFlag);
             Toasts.Show("Kit LOTO devuelto a la estación.", ToastKind.Success);
         }
