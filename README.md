@@ -58,5 +58,5 @@ Creado por Tamara D'Angelo ([@Tamara1001](https://github.com/Tamara1001)).
 
 - Todo el contenido (código, modelos 3D, diseño del procedimiento y documentación) es © Tamara D'Angelo, **todos los derechos reservados**. El repositorio es público para que se lea y se evalúe: se puede mirar, clonar y probar localmente con ese fin, pero **no se puede copiar, modificar, redistribuir ni reutilizar** sin permiso por escrito. Ver [`LICENSE`](LICENSE).
 - Los assets de terceros (sonidos de Kenney, fuente Barlow) mantienen su propia licencia, registrada en [`.agents/ASSETS.md`](.agents/ASSETS.md).
-- Para consultas de uso, colaboración o encargos similares: tamaradangelo03@gmail.com.
+- Para consultas de uso, colaboración o encargos similares: contactotamara1001@gmail.com.
 - Es material de capacitación de demostración: no reemplaza una formación certificada en seguridad.
