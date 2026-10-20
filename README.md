@@ -2,6 +2,8 @@
 
 Demo de un simulador de capacitación laboral en 3D: el usuario ejecuta el procedimiento **LOTO (Lockout/Tagout, bloqueo y etiquetado de energías peligrosas)** sobre una bomba centrífuga con motor eléctrico antes de hacer un cambio de sello mecánico.
 
+**▶ [Jugar en el navegador (itch.io)](https://tamara1001.itch.io/capacitacion-loto)**
+
 Es una demo propia, pensada como base para producir simuladores de capacitación similares para empresas. Corre en el navegador (WebGL) y está diseñada desde el principio para portarse a VR.
 
 ## De un vistazo
@@ -54,6 +56,7 @@ La carpeta [`.agents/`](.agents/README.md) es la fuente de verdad del proyecto:
 ## Autoría y licencias
 Creado por Tamara D'Angelo ([@Tamara1001](https://github.com/Tamara1001)).
 
-- El **código** está bajo licencia MIT. Ver [`LICENSE`](LICENSE).
-- Los **modelos, texturas, audio y fuentes** tienen el origen y la licencia registrados en [`.agents/ASSETS.md`](.agents/ASSETS.md). La licencia MIT no los cubre si el registro indica otra cosa.
+- Todo el contenido (código, modelos 3D, diseño del procedimiento y documentación) es © Tamara D'Angelo, **todos los derechos reservados**. El repositorio es público para que se lea y se evalúe: se puede mirar, clonar y probar localmente con ese fin, pero **no se puede copiar, modificar, redistribuir ni reutilizar** sin permiso por escrito. Ver [`LICENSE`](LICENSE).
+- Los assets de terceros (sonidos de Kenney, fuente Barlow) mantienen su propia licencia, registrada en [`.agents/ASSETS.md`](.agents/ASSETS.md).
+- Para consultas de uso, colaboración o encargos similares: tamaradangelo03@gmail.com.
 - Es material de capacitación de demostración: no reemplaza una formación certificada en seguridad.

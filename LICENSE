@@ -1,25 +1,40 @@
-MIT License
+Simulador LOTO — Source-Available License (All Rights Reserved)
 
-Copyright (c) 2026 Tamara D'Angelo
+Copyright (c) 2026 Tamara D'Angelo. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of the source code in this repository (the "Software"), to deal in the
-Software without restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
+This repository is public so that it can be read and evaluated. It is NOT open
+source. Except for the permissions expressly granted below, all rights are
+reserved.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. PERMITTED (no further permission needed)
+   - Reading and browsing the source code, documentation and assets in this
+     repository.
+   - Cloning the repository and running the project locally for the sole
+     purpose of evaluating it, for example by recruiters, hiring managers,
+     potential clients, teachers or reviewers.
+   - Playing the published web build.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. NOT PERMITTED without prior written permission from the copyright holder
+   - Copying, reproducing or reusing any part of the code, models, textures,
+     audio, documentation, procedure design or other content in another
+     project, commercial or not.
+   - Modifying, adapting or creating derivative works.
+   - Distributing, republishing, sublicensing, selling or hosting this project
+     or any part of it, including builds or modified builds.
+   - Using the project or any part of it to produce training simulators or
+     other products for third parties.
+   - Using the content to train machine-learning models.
+   - Removing or altering this notice or the authorship credits.
 
-This license applies to the source code only. Art, audio, text, fonts and
-other creative assets in this repository belong to their respective authors
-and are NOT covered by this license.
+3. THIRD-PARTY MATERIAL
+   Some assets come from third parties and keep their own licenses (for
+   example Kenney sounds under CC0 and the Barlow font under SIL OFL 1.1).
+   They are listed in .agents/ASSETS.md. This license does not change their
+   terms.
+
+4. NO WARRANTY
+   The project is provided "as is", without warranty of any kind. It is a
+   demonstration and is not a substitute for certified safety training.
+
+To request permission for any use not listed above, contact:
+tamaradangelo03@gmail.com
