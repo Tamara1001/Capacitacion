@@ -4,6 +4,13 @@ Demo de un simulador de capacitación laboral en 3D: el usuario ejecuta el proce
 
 Es una demo propia, pensada como base para producir simuladores de capacitación similares para empresas. Corre en el navegador (WebGL) y está diseñada desde el principio para portarse a VR.
 
+## De un vistazo
+- **Mi rol:** diseño, programación y modelado 3D completos de la demo (con Claude Code como asistente de desarrollo).
+- **Alcance:** unas 8.000 líneas de C# (125 scripts), props 3D propios en Blender y una build WebGL de unos 12 MB.
+- **Arquitectura limpia:** la lógica de simulación (bomba, válvulas, seccionador) es independiente de la interfaz y del dispositivo de entrada, y el procedimiento se define como datos. Sumar otro procedimiento o equipo no obliga a reescribir el motor.
+- **Pensado para clientes:** dos modos (guiado y evaluación), reporte final y adaptación automática de calidad gráfica en la web.
+- **Documentación completa** del proceso en [`.agents/`](.agents/README.md): brief, decisiones, procedimiento, arquitectura, diseño, assets y roadmap.
+
 ## Qué se practica
 Un recorrido de 5 a 10 minutos por la secuencia basada en OSHA 29 CFR 1910.147, simplificada pero correcta:
 
